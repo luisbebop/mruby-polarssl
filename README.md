@@ -78,23 +78,6 @@ encoded_encrypted_data = Base64.encode64(encrypted_data)
 encoded_iv = Base64.encode64(my_iv)
 ```
 
-## Requirement
-- PolarSSL library
-
-Install PolarSSL from source via https://polarssl.org/download or install it using your operating system. For example:
-
-On Ubuntu:
-
-```
-sudo apt-get install libpolarssl-dev
-```
-
-On Mac OS X with [Homebrew](http://mxcl.github.io/homebrew/):
-
-```
-brew install polarssl
-```
-
 ## License
 
 *Please note*: PolarSSL itself is released as GPL or a Commercial License.
