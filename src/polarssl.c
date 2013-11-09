@@ -97,6 +97,9 @@ static mrb_value mrb_ctrdrbg_self_test() {
 }
 
 #define E_MALLOC_FAILED (mrb_class_get_under(mrb,mrb_class_get(mrb, "PolarSSL"),"MallocFailed"))
+#define E_NETWANTREAD (mrb_class_get_under(mrb,mrb_class_get(mrb, "PolarSSL"),"NetWantRead"))
+#define E_NETWANTWRITE (mrb_class_get_under(mrb,mrb_class_get(mrb, "PolarSSL"),"NetWantWrite"))
+#define E_SSL_ERROR (mrb_class_get_under(mrb,mrb_class_get_under(mrb,mrb_class_get(mrb, "PolarSSL"),"SSL"), "Error"))
 
 static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
   ssl_context *ssl;
