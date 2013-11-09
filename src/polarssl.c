@@ -29,7 +29,7 @@ static mrb_value mrb_entropy_gather(mrb_state *mrb, mrb_value self) {
   }
 }
 
-static mrb_value mrb_entropy_init(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_entropy_initialize(mrb_state *mrb, mrb_value self) {
   entropy_context *entropy;
 
   entropy = (entropy_context *)DATA_PTR(self);
@@ -47,7 +47,7 @@ static mrb_value mrb_entropy_init(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
-static mrb_value mrb_ctrdrbg_init(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_ctrdrbg_initialize(mrb_state *mrb, mrb_value self) {
   ctr_drbg_context *ctr_drbg;
   entropy_context *entropy_p;
   mrb_value entp;
@@ -92,12 +92,12 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	
 	e = mrb_define_class_under(mrb, p, "Entropy", mrb->object_class);
 	MRB_SET_INSTANCE_TT(e, MRB_TT_DATA);
-	mrb_define_method(mrb, e, "initialize", mrb_entropy_init, MRB_ARGS_NONE());
+	mrb_define_method(mrb, e, "initialize", mrb_entropy_initialize, MRB_ARGS_NONE());
 	mrb_define_method(mrb, e, "gather", mrb_entropy_gather, MRB_ARGS_NONE());
 
 	c = mrb_define_class_under(mrb, p, "CtrDrbg", mrb->object_class);
 	MRB_SET_INSTANCE_TT(c, MRB_TT_DATA);
-	mrb_define_method(mrb, c, "initialize", mrb_ctrdrbg_init, MRB_ARGS_REQ(1));
+	mrb_define_method(mrb, c, "initialize", mrb_ctrdrbg_initialize, MRB_ARGS_REQ(1));
 	mrb_define_singleton_method(mrb, (struct RObject*)c, "self_test", mrb_ctrdrbg_self_test, MRB_ARGS_NONE());
 }
 
