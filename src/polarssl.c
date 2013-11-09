@@ -37,7 +37,7 @@ static mrb_value mrb_entropy_init(mrb_state *mrb, mrb_value self) {
   DATA_TYPE(self) = &mrb_entropy_type;
   DATA_PTR(self) = NULL;
 
-  entropy = (entropy_context *)mrb_malloc(mrb, sizeof(*entropy));
+  entropy = (entropy_context *)mrb_malloc(mrb, sizeof(entropy_context));
   DATA_PTR(self) = entropy;
   entropy_init(entropy);
   return self;
