@@ -61,18 +61,27 @@ if Object.const_defined?(:PolarSSL)
   
   assert('PolarSSL::SSL::SSL_IS_CLIENT') do
     PolarSSL::SSL.const_defined? :SSL_IS_CLIENT
+    assert_equal(PolarSSL::SSL::SSL_IS_CLIENT, 0)
   end
   
   assert('PolarSSL::SSL::SSL_VERIFY_NONE') do
     PolarSSL::SSL.const_defined? :SSL_VERIFY_NONE
+    assert_equal(PolarSSL::SSL::SSL_VERIFY_NONE, 0)
   end
   
   assert('PolarSSL::SSL::SSL_VERIFY_OPTIONAL') do
     PolarSSL::SSL.const_defined? :SSL_VERIFY_OPTIONAL
+    assert_equal(PolarSSL::SSL::SSL_VERIFY_OPTIONAL, 1)
   end
   
   assert('PolarSSL::SSL::SSL_VERIFY_REQUIRED') do
     PolarSSL::SSL.const_defined? :SSL_VERIFY_REQUIRED
+    assert_equal(PolarSSL::SSL::SSL_VERIFY_REQUIRED, 2)
   end
   
+  assert('PolarSSL::SSL#set_endpoint') do
+    ssl = PolarSSL::SSL.new
+    ssl.set_endpoint(PolarSSL::SSL::SSL_IS_CLIENT)
+  end
+    
 end

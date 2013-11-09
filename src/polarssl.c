@@ -133,6 +133,16 @@ static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
+static mrb_value mrb_ssl_set_endpoint(mrb_state *mrb, mrb_value self) {
+	ssl_context *ssl;
+	mrb_int endpoint_mode;
+	
+	mrb_get_args(mrb, "i", &endpoint_mode);	
+	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
+	ssl_set_endpoint(ssl, endpoint_mode);
+	return mrb_true_value();
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c, *s;
 	
@@ -159,6 +169,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	mrb_define_const(mrb, s, "SSL_VERIFY_OPTIONAL", mrb_fixnum_value(SSL_VERIFY_OPTIONAL));
 	// 2: Certificate verification mode for having required verification.
 	mrb_define_const(mrb, s, "SSL_VERIFY_REQUIRED", mrb_fixnum_value(SSL_VERIFY_REQUIRED));
+	mrb_define_method(mrb, s, "set_endpoint", mrb_ssl_set_endpoint, MRB_ARGS_REQ(1));
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {	
