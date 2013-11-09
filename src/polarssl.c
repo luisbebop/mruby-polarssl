@@ -1,4 +1,5 @@
 #include "mruby.h"
+#include "mruby/class.h"
 #include "mruby/data.h"
 #include "polarssl/entropy.h"
 
@@ -55,6 +56,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	
 	p = mrb_define_module(mrb, "PolarSSL");
 	e = mrb_define_class_under(mrb, p, "Entropy", mrb->object_class);
+	MRB_SET_INSTANCE_TT(e, MRB_TT_DATA);
 	mrb_define_method(mrb, e, "initialize", mrb_entropy_init, MRB_ARGS_NONE());
 	mrb_define_method(mrb, e, "gather", mrb_entropy_gather, MRB_ARGS_NONE());
 }
