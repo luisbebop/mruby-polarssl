@@ -83,5 +83,10 @@ if Object.const_defined?(:PolarSSL)
     ssl = PolarSSL::SSL.new
     ssl.set_endpoint(PolarSSL::SSL::SSL_IS_CLIENT)
   end
+  
+  assert('PolarSSL::SSL#set_authmode') do
+    ssl = PolarSSL::SSL.new
+    ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
+  end
     
 end
