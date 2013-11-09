@@ -3,15 +3,7 @@
 #include "mruby/data.h"
 #include "polarssl/entropy.h"
 
-static void lib_entropy_free(mrb_state *mrb, void *ptr) {
-  entropy_context *entropy = ptr;
-
-  if (entropy != NULL) {
-    mrb_free(mrb, entropy);
-  }
-}
-
-static struct mrb_data_type mrb_entropy_type = { "ENTROPY", lib_entropy_free };
+static struct mrb_data_type mrb_entropy_type = { "Entropy", mrb_free };
 
 static void entropycheck(mrb_state *mrb, mrb_value self, entropy_context **entropyp) {
   entropy_context *entropy;
@@ -40,7 +32,7 @@ static mrb_value mrb_entropy_init(mrb_state *mrb, mrb_value self) {
 
   entropy = (entropy_context *)DATA_PTR(self);
   if (entropy) {
-    lib_entropy_free(mrb, entropy);
+    mrb_free(mrb, entropy);
   }
   DATA_TYPE(self) = &mrb_entropy_type;
   DATA_PTR(self) = NULL;
