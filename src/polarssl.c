@@ -3,9 +3,20 @@
 #include "mruby/data.h"
 #include "polarssl/entropy.h"
 #include "polarssl/ctr_drbg.h"
+#include "polarssl/ssl.h"
+#include "polarssl/version.h"
+
+static void mrb_ssl_free(mrb_state *mrb, void *ptr) {
+	ssl_context *ssl = ptr;
+	
+	if (ssl != NULL) {
+		ssl_free(ssl);
+	}
+}
 
 static struct mrb_data_type mrb_entropy_type = { "Entropy", mrb_free };
 static struct mrb_data_type mrb_ctr_drbg_type = { "CtrDrbg", mrb_free };
+static struct mrb_data_type mrb_ssl_type = { "SSL", mrb_ssl_free };
 
 static void entropycheck(mrb_state *mrb, mrb_value self, entropy_context **entropyp) {
   entropy_context *entropy;
@@ -85,8 +96,42 @@ static mrb_value mrb_ctrdrbg_self_test() {
   }
 }
 
+#define E_MALLOC_FAILED (mrb_class_get_under(mrb,mrb_class_get(mrb, "PolarSSL"),"MallocFailed"))
+
+static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
+  ssl_context *ssl;
+  int ret;
+
+  #if POLARSSL_VERSION_MAJOR == 1 && POLARSSL_VERSION_MINOR == 1
+  ssl_session *ssn;
+  #endif
+
+  ssl = (ssl_context *)DATA_PTR(self);
+  if (ssl) {
+    mrb_ssl_free(mrb, ssl);
+  }
+  DATA_TYPE(self) = &mrb_ssl_type;
+  DATA_PTR(self) = NULL;
+
+  ssl = (ssl_context *)mrb_malloc(mrb, sizeof(ssl_context));
+  DATA_PTR(self) = ssl;
+  
+  ret = ssl_init(ssl);
+  if (ret == POLARSSL_ERR_SSL_MALLOC_FAILED) {
+    mrb_raise(mrb, E_MALLOC_FAILED, "ssl_init() memory allocation failed.");	
+  }
+
+  #if POLARSSL_VERSION_MAJOR == 1 && POLARSSL_VERSION_MINOR == 1
+  ssn = (ssl_session *)mrb_malloc(mrb, sizeof(ssl_session));
+  ssl_set_session( ssl, 0, 600, ssn );
+  ssl_set_ciphersuites( ssl, ssl_default_ciphersuites );
+  #endif
+  
+  return self;
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
-	struct RClass *p, *e, *c;
+	struct RClass *p, *e, *c, *s;
 	
 	p = mrb_define_module(mrb, "PolarSSL");
 	
@@ -99,6 +144,10 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	MRB_SET_INSTANCE_TT(c, MRB_TT_DATA);
 	mrb_define_method(mrb, c, "initialize", mrb_ctrdrbg_initialize, MRB_ARGS_REQ(1));
 	mrb_define_singleton_method(mrb, (struct RObject*)c, "self_test", mrb_ctrdrbg_self_test, MRB_ARGS_NONE());
+	
+	s = mrb_define_class_under(mrb, p, "SSL", mrb->object_class);
+	MRB_SET_INSTANCE_TT(s, MRB_TT_DATA);
+	mrb_define_method(mrb, s, "initialize", mrb_ssl_initialize, MRB_ARGS_NONE());
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {	

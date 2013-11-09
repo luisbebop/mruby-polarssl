@@ -50,4 +50,12 @@ if Object.const_defined?(:PolarSSL)
   assert('PolarSSL::CtrDrbg#self_test') do
     PolarSSL::CtrDrbg.self_test
   end
+  
+  assert('PolarSSL::SSL') do
+    PolarSSL::SSL.class == Class
+  end
+  
+  assert('PolarSSL::SSL#new') do
+    ssl = PolarSSL::SSL.new
+  end
 end
