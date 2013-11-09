@@ -88,5 +88,27 @@ if Object.const_defined?(:PolarSSL)
     ssl = PolarSSL::SSL.new
     ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
   end
-    
+  
+  assert('PolarSSL::SSL#set_rng') do 
+    entropy = PolarSSL::Entropy.new
+    ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
+    ssl = PolarSSL::SSL.new
+
+    ssl.set_endpoint(PolarSSL::SSL::SSL_IS_CLIENT)
+    ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
+    ssl.set_rng(ctr_drbg)
+  end
+  
+  assert('PolarSSL::SSL#set_rng err') do 
+    err = nil
+    begin
+      ssl = PolarSSL::SSL.new
+      ssl.set_rng "foo"
+    rescue Exception => e
+      err = e
+    end
+    p "[BUG?expected Data?]#{e}"
+    err.class == TypeError
+  end
+      
 end

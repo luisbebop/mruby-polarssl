@@ -153,6 +153,19 @@ static mrb_value mrb_ssl_set_authmode(mrb_state *mrb, mrb_value self) {
 	return mrb_true_value();
 }
 
+static mrb_value mrb_ssl_set_rng(mrb_state *mrb, mrb_value self) {
+	ssl_context *ssl;
+	ctr_drbg_context *ctr_drbg;
+	mrb_value rng;
+	
+	mrb_get_args(mrb, "o", &rng);
+	mrb_data_check_type(mrb, rng, &mrb_ctr_drbg_type);
+	ctr_drbg = DATA_CHECK_GET_PTR(mrb, rng, &mrb_ctr_drbg_type, ctr_drbg_context);	
+	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
+	ssl_set_rng(ssl, ctr_drbg_random, ctr_drbg);
+	return mrb_true_value();
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c, *s;
 	
@@ -181,6 +194,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	mrb_define_const(mrb, s, "SSL_VERIFY_REQUIRED", mrb_fixnum_value(SSL_VERIFY_REQUIRED));
 	mrb_define_method(mrb, s, "set_endpoint", mrb_ssl_set_endpoint, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "set_authmode", mrb_ssl_set_authmode, MRB_ARGS_REQ(1));
+	mrb_define_method(mrb, s, "set_rng", mrb_ssl_set_rng, MRB_ARGS_REQ(1));
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {	
