@@ -58,4 +58,21 @@ if Object.const_defined?(:PolarSSL)
   assert('PolarSSL::SSL#new') do
     ssl = PolarSSL::SSL.new
   end
+  
+  assert('PolarSSL::SSL::SSL_IS_CLIENT') do
+    PolarSSL::SSL.const_defined? :SSL_IS_CLIENT
+  end
+  
+  assert('PolarSSL::SSL::SSL_VERIFY_NONE') do
+    PolarSSL::SSL.const_defined? :SSL_VERIFY_NONE
+  end
+  
+  assert('PolarSSL::SSL::SSL_VERIFY_OPTIONAL') do
+    PolarSSL::SSL.const_defined? :SSL_VERIFY_OPTIONAL
+  end
+  
+  assert('PolarSSL::SSL::SSL_VERIFY_REQUIRED') do
+    PolarSSL::SSL.const_defined? :SSL_VERIFY_REQUIRED
+  end
+  
 end
