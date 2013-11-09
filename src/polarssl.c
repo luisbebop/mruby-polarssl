@@ -89,7 +89,7 @@ static mrb_value mrb_ctrdrbg_initialize(mrb_state *mrb, mrb_value self) {
 }
 
 static mrb_value mrb_ctrdrbg_self_test() {
-  if( ctr_drbg_self_test( 1 ) == 0 ) {
+  if( ctr_drbg_self_test(0) == 0 ) {
 	return mrb_true_value();
   } else {
 	return mrb_false_value();
