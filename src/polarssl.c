@@ -77,6 +77,14 @@ static mrb_value mrb_ctrdrbg_init(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
+static mrb_value mrb_ctrdrbg_self_test() {
+  if( ctr_drbg_self_test( 1 ) == 0 ) {
+	return mrb_true_value();
+  } else {
+	return mrb_false_value();
+  }
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c;
 	
@@ -90,6 +98,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	c = mrb_define_class_under(mrb, p, "CtrDrbg", mrb->object_class);
 	MRB_SET_INSTANCE_TT(c, MRB_TT_DATA);
 	mrb_define_method(mrb, c, "initialize", mrb_ctrdrbg_init, MRB_ARGS_REQ(1));
+	mrb_define_singleton_method(mrb, (struct RObject*)c, "self_test", mrb_ctrdrbg_self_test, MRB_ARGS_NONE());
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {	

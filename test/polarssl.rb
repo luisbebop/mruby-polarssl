@@ -46,4 +46,8 @@ if Object.const_defined?(:PolarSSL)
     entropy = PolarSSL::Entropy.new
     ctrdrbg = PolarSSL::CtrDrbg.new entropy
   end
+  
+  assert('PolarSSL::CtrDrbg#self_test') do
+    PolarSSL::CtrDrbg.self_test
+  end
 end
