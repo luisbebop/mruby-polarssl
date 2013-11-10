@@ -180,7 +180,22 @@ if Object.const_defined?(:PolarSSL)
     while chunk = ssl.read(1024)
       response << chunk
     end
-    p response
+    p "https response size: #{response.size}"
+  end
+  
+  assert('PolarSSL::SSL#close_notify') do 
+    socket = TCPSocket.new('polarssl.org', 443)
+    entropy = PolarSSL::Entropy.new
+    ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
+    ssl = PolarSSL::SSL.new
+    ssl.set_endpoint(PolarSSL::SSL::SSL_IS_CLIENT)
+    ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
+    ssl.set_rng(ctr_drbg)
+    ssl.set_socket(socket)
+    ssl.handshake
+    ssl.write("GET / HTTP/1.0\r\nHost: polarssl.org\r\n\r\n")
+    p ssl.read(4)
+    ssl.close_notify
   end
       
 end
