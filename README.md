@@ -44,6 +44,7 @@ ssl.handshake
 
 ssl.write("GET / HTTP/1.0\r\nHost: polarssl.org\r\n\r\n")
 
+response = ""
 while chunk = ssl.read(1024)
   response << chunk
 end
