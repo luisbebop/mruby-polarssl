@@ -1,6 +1,7 @@
 #include "mruby.h"
 #include "mruby/class.h"
 #include "mruby/data.h"
+#include "mruby/string.h"
 #include "mruby/ext/io.h"
 #include "polarssl/entropy.h"
 #include "polarssl/ctr_drbg.h"
@@ -201,6 +202,23 @@ static mrb_value mrb_ssl_handshake(mrb_state *mrb, mrb_value self) {
 	return mrb_true_value();
 }
 
+static mrb_value mrb_ssl_write(mrb_state *mrb, mrb_value self) {
+	ssl_context *ssl;
+	mrb_value msg;
+	char *buffer;
+	int ret;
+	
+	mrb_get_args(mrb, "S", &msg);
+	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
+	
+	buffer = RSTRING_PTR(msg);
+	ret = ssl_write(ssl, (const unsigned char *)buffer, RSTRING_LEN(msg));
+	if (ret < 0) {
+		mrb_raise(mrb, E_SSL_ERROR, "ssl_write() returned E_SSL_ERROR");
+	}
+	return mrb_true_value();
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c, *s;
 	
@@ -232,6 +250,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	mrb_define_method(mrb, s, "set_rng", mrb_ssl_set_rng, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "set_socket", mrb_ssl_set_socket, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "handshake", mrb_ssl_handshake, MRB_ARGS_NONE());
+	mrb_define_method(mrb, s, "write", mrb_ssl_write, MRB_ARGS_REQ(1));
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {	
