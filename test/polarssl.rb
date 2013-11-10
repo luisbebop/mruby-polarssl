@@ -110,5 +110,46 @@ if Object.const_defined?(:PolarSSL)
     p "[BUG?expected Data?]#{e}"
     err.class == TypeError
   end
+  
+  assert('PolarSSL:SSL#set_socket') do 
+    socket = TCPSocket.new('polarssl.org', 443)
+    entropy = PolarSSL::Entropy.new
+    ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
+    ssl = PolarSSL::SSL.new
+    ssl.set_endpoint(PolarSSL::SSL::SSL_IS_CLIENT)
+    ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
+    ssl.set_rng(ctr_drbg)
+    ssl.set_socket(socket)
+  end
+  
+  assert('PolarSSL:SSL#handshake') do 
+    socket = TCPSocket.new('polarssl.org', 443)
+    entropy = PolarSSL::Entropy.new
+    ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
+    ssl = PolarSSL::SSL.new
+    ssl.set_endpoint(PolarSSL::SSL::SSL_IS_CLIENT)
+    ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
+    ssl.set_rng(ctr_drbg)
+    ssl.set_socket(socket)
+    ssl.handshake
+  end
+  
+  assert('PolarSSL:SSL#handshake err') do 
+    socket = TCPSocket.new('polarssl.org', 80)
+    entropy = PolarSSL::Entropy.new
+    ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
+    ssl = PolarSSL::SSL.new
+    ssl.set_endpoint(PolarSSL::SSL::SSL_IS_CLIENT)
+    ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
+    ssl.set_rng(ctr_drbg)
+    ssl.set_socket(socket)
+    err = nil
+    begin
+      ssl.handshake
+    rescue Exception => e
+      err = e
+    end
+    err.class == PolarSSL::SSL::Error
+  end
       
 end
