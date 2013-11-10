@@ -29,7 +29,7 @@ ruby run_test.rb test
 
 ## Usage
 ```ruby
-socket = TCPSocket.new('polarssl', 443)
+socket = TCPSocket.new('polarssl.org', 443)
 
 entropy = PolarSSL::Entropy.new
 ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
@@ -57,7 +57,7 @@ socket.close
 ssl.close
 ```
 
-### Encrypting data
+### Encrypting data (WIP)
 
 The `PolarSSL::Cipher` class lets you encrypt data with a wide range of
 encryption standards like AES, Blowfish and DES.
