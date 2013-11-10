@@ -219,6 +219,26 @@ static mrb_value mrb_ssl_write(mrb_state *mrb, mrb_value self) {
 	return mrb_true_value();
 }
 
+static mrb_value mrb_ssl_read(mrb_state *mrb, mrb_value self) {
+	ssl_context *ssl;
+	mrb_int maxlen = 0;
+	mrb_value buf;
+	int ret;
+	
+	mrb_get_args(mrb, "i", &maxlen);
+	buf = mrb_str_buf_new(mrb, maxlen);
+	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
+	ret = ssl_read(ssl, (unsigned char *)RSTRING_PTR(buf), maxlen);
+	if ( ret == 0 || ret == POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY) {
+		return mrb_nil_value();
+	} else if (ret < 0) {
+		mrb_raise(mrb, E_SSL_ERROR, "ssl_write() returned E_SSL_ERROR");
+	} else {
+		mrb_str_resize(mrb, buf, ret);
+	}
+	return buf;
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c, *s;
 	
@@ -251,6 +271,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	mrb_define_method(mrb, s, "set_socket", mrb_ssl_set_socket, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "handshake", mrb_ssl_handshake, MRB_ARGS_NONE());
 	mrb_define_method(mrb, s, "write", mrb_ssl_write, MRB_ARGS_REQ(1));
+	mrb_define_method(mrb, s, "read", mrb_ssl_read, MRB_ARGS_REQ(1));
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {	

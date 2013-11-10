@@ -164,5 +164,23 @@ if Object.const_defined?(:PolarSSL)
     ssl.handshake
     ssl.write "foo"
   end
+  
+  assert('PolarSSL::SSL#read') do 
+    socket = TCPSocket.new('polarssl.org', 443)
+    entropy = PolarSSL::Entropy.new
+    ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
+    ssl = PolarSSL::SSL.new
+    ssl.set_endpoint(PolarSSL::SSL::SSL_IS_CLIENT)
+    ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
+    ssl.set_rng(ctr_drbg)
+    ssl.set_socket(socket)
+    ssl.handshake
+    ssl.write("GET / HTTP/1.0\r\nHost: polarssl.org\r\n\r\n")
+    response = ""
+    while chunk = ssl.read(1024)
+      response << chunk
+    end
+    p response
+  end
       
 end
