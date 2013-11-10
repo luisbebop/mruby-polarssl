@@ -252,6 +252,14 @@ static mrb_value mrb_ssl_close_notify(mrb_state *mrb, mrb_value self) {
 	return mrb_true_value();
 }
 
+static mrb_value mrb_ssl_close(mrb_state *mrb, mrb_value self) {
+	ssl_context *ssl;
+	
+	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
+	memset(ssl, 0, sizeof(ssl_context));
+	return mrb_true_value();
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c, *s;
 	
@@ -286,6 +294,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	mrb_define_method(mrb, s, "write", mrb_ssl_write, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "read", mrb_ssl_read, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "close_notify", mrb_ssl_close_notify, MRB_ARGS_NONE());
+	mrb_define_method(mrb, s, "close", mrb_ssl_close, MRB_ARGS_NONE());
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {	
