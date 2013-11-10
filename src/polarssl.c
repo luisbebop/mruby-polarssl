@@ -232,7 +232,7 @@ static mrb_value mrb_ssl_read(mrb_state *mrb, mrb_value self) {
 	if ( ret == 0 || ret == POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY) {
 		return mrb_nil_value();
 	} else if (ret < 0) {
-		mrb_raise(mrb, E_SSL_ERROR, "ssl_write() returned E_SSL_ERROR");
+		mrb_raise(mrb, E_SSL_ERROR, "ssl_read() returned E_SSL_ERROR");
 	} else {
 		mrb_str_resize(mrb, buf, ret);
 	}
