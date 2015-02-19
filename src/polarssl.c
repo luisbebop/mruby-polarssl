@@ -7,6 +7,7 @@
 #include "polarssl/ctr_drbg.h"
 #include "polarssl/ssl.h"
 #include "polarssl/version.h"
+#include <sys/ioctl.h>
 
 extern struct mrb_data_type mrb_io_type;
 
@@ -260,6 +261,16 @@ static mrb_value mrb_ssl_close(mrb_state *mrb, mrb_value self) {
 	return mrb_true_value();
 }
 
+static mrb_value mrb_ssl_bytes_available(mrb_state *mrb, mrb_value self) {
+	ssl_context *ssl;
+    mrb_int count=0;
+
+	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
+    ioctl(*((int *)ssl->p_recv), FIONREAD, &count);
+
+	return mrb_fixnum_value(count);
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c, *s;
 	
@@ -293,6 +304,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	mrb_define_method(mrb, s, "handshake", mrb_ssl_handshake, MRB_ARGS_NONE());
 	mrb_define_method(mrb, s, "write", mrb_ssl_write, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "read", mrb_ssl_read, MRB_ARGS_REQ(1));
+	mrb_define_method(mrb, s, "bytes_available", mrb_ssl_bytes_available, MRB_ARGS_NONE());
 	mrb_define_method(mrb, s, "close_notify", mrb_ssl_close_notify, MRB_ARGS_NONE());
 	mrb_define_method(mrb, s, "close", mrb_ssl_close, MRB_ARGS_NONE());
 }
