@@ -13,7 +13,7 @@ extern struct mrb_data_type mrb_io_type;
 
 static void mrb_ssl_free(mrb_state *mrb, void *ptr) {
 	ssl_context *ssl = ptr;
-	
+
 	if (ssl != NULL) {
 		ssl_free(ssl);
 	}
@@ -57,9 +57,9 @@ static mrb_value mrb_entropy_initialize(mrb_state *mrb, mrb_value self) {
 
   entropy = (entropy_context *)mrb_malloc(mrb, sizeof(entropy_context));
   DATA_PTR(self) = entropy;
-  
+
   entropy_init(entropy);
-  
+
   return self;
 }
 
@@ -84,7 +84,7 @@ static mrb_value mrb_ctrdrbg_initialize(mrb_state *mrb, mrb_value self) {
 
   ctr_drbg = (ctr_drbg_context *)mrb_malloc(mrb, sizeof(ctr_drbg_context));
   DATA_PTR(self) = ctr_drbg;
-  
+
   ret = ctr_drbg_init(ctr_drbg, entropy_func, entropy_p, NULL, 0 );
   if (ret == POLARSSL_ERR_CTR_DRBG_ENTROPY_SOURCE_FAILED ) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "Could not initialize entropy source");	
@@ -123,10 +123,10 @@ static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
 
   ssl = (ssl_context *)mrb_malloc(mrb, sizeof(ssl_context));
   DATA_PTR(self) = ssl;
-  
+
   ret = ssl_init(ssl);
   if (ret == POLARSSL_ERR_SSL_MALLOC_FAILED) {
-    mrb_raise(mrb, E_MALLOC_FAILED, "ssl_init() memory allocation failed.");	
+    mrb_raise(mrb, E_MALLOC_FAILED, "ssl_init() memory allocation failed.");
   }
 
   #if POLARSSL_VERSION_MAJOR == 1 && POLARSSL_VERSION_MINOR == 1
@@ -134,15 +134,15 @@ static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
   ssl_set_session( ssl, 0, 600, ssn );
   ssl_set_ciphersuites( ssl, ssl_default_ciphersuites );
   #endif
-  
+
   return self;
 }
 
 static mrb_value mrb_ssl_set_endpoint(mrb_state *mrb, mrb_value self) {
 	ssl_context *ssl;
 	mrb_int endpoint_mode;
-	
-	mrb_get_args(mrb, "i", &endpoint_mode);	
+
+	mrb_get_args(mrb, "i", &endpoint_mode);
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
 	ssl_set_endpoint(ssl, endpoint_mode);
 	return mrb_true_value();
@@ -151,8 +151,8 @@ static mrb_value mrb_ssl_set_endpoint(mrb_state *mrb, mrb_value self) {
 static mrb_value mrb_ssl_set_authmode(mrb_state *mrb, mrb_value self) {
 	ssl_context *ssl;
 	mrb_int authmode;
-	
-	mrb_get_args(mrb, "i", &authmode);	
+
+	mrb_get_args(mrb, "i", &authmode);
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
 	ssl_set_authmode(ssl, authmode);
 	return mrb_true_value();
@@ -162,10 +162,10 @@ static mrb_value mrb_ssl_set_rng(mrb_state *mrb, mrb_value self) {
 	ssl_context *ssl;
 	ctr_drbg_context *ctr_drbg;
 	mrb_value rng;
-	
+
 	mrb_get_args(mrb, "o", &rng);
 	mrb_data_check_type(mrb, rng, &mrb_ctr_drbg_type);
-	ctr_drbg = DATA_CHECK_GET_PTR(mrb, rng, &mrb_ctr_drbg_type, ctr_drbg_context);	
+	ctr_drbg = DATA_CHECK_GET_PTR(mrb, rng, &mrb_ctr_drbg_type, ctr_drbg_context);
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
 	ssl_set_rng(ssl, ctr_drbg_random, ctr_drbg);
 	return mrb_true_value();
@@ -175,10 +175,10 @@ static mrb_value mrb_ssl_set_socket(mrb_state *mrb, mrb_value self) {
 	ssl_context *ssl;
 	struct mrb_io *fptr;
 	mrb_value socket;
-	
+
 	mrb_get_args(mrb, "o", &socket);
 	mrb_data_check_type(mrb, socket, &mrb_io_type);
-	fptr = DATA_CHECK_GET_PTR(mrb, socket, &mrb_io_type, struct mrb_io);	
+	fptr = DATA_CHECK_GET_PTR(mrb, socket, &mrb_io_type, struct mrb_io);
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
 	ssl_set_bio( ssl, net_recv, &fptr->fd, net_send, &fptr->fd );
 	return mrb_true_value();
@@ -187,9 +187,9 @@ static mrb_value mrb_ssl_set_socket(mrb_state *mrb, mrb_value self) {
 static mrb_value mrb_ssl_handshake(mrb_state *mrb, mrb_value self) {
 	ssl_context *ssl;
 	int ret;
-	
+
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-	
+
 	ret = ssl_handshake(ssl);
 	if (ret < 0) {
 		if (ret == POLARSSL_ERR_NET_WANT_READ) {
@@ -208,10 +208,10 @@ static mrb_value mrb_ssl_write(mrb_state *mrb, mrb_value self) {
 	mrb_value msg;
 	char *buffer;
 	int ret;
-	
+
 	mrb_get_args(mrb, "S", &msg);
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-	
+
 	buffer = RSTRING_PTR(msg);
 	ret = ssl_write(ssl, (const unsigned char *)buffer, RSTRING_LEN(msg));
 	if (ret < 0) {
@@ -225,7 +225,7 @@ static mrb_value mrb_ssl_read(mrb_state *mrb, mrb_value self) {
 	mrb_int maxlen = 0;
 	mrb_value buf;
 	int ret;
-	
+
 	mrb_get_args(mrb, "i", &maxlen);
 	buf = mrb_str_buf_new(mrb, maxlen);
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
@@ -243,9 +243,9 @@ static mrb_value mrb_ssl_read(mrb_state *mrb, mrb_value self) {
 static mrb_value mrb_ssl_close_notify(mrb_state *mrb, mrb_value self) {
 	ssl_context *ssl;
 	int ret;
-	
+
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-	
+
 	ret = ssl_close_notify(ssl);
 	if (ret < 0) {
 		mrb_raise(mrb, E_SSL_ERROR, "ssl_close_notify() returned E_SSL_ERROR");
@@ -255,7 +255,7 @@ static mrb_value mrb_ssl_close_notify(mrb_state *mrb, mrb_value self) {
 
 static mrb_value mrb_ssl_close(mrb_state *mrb, mrb_value self) {
 	ssl_context *ssl;
-	
+
 	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
 	memset(ssl, 0, sizeof(ssl_context));
 	return mrb_true_value();
@@ -283,9 +283,9 @@ static mrb_value mrb_ssl_fileno(mrb_state *mrb, mrb_value self) {
 
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c, *s;
-	
+
 	p = mrb_define_module(mrb, "PolarSSL");
-	
+
 	e = mrb_define_class_under(mrb, p, "Entropy", mrb->object_class);
 	MRB_SET_INSTANCE_TT(e, MRB_TT_DATA);
 	mrb_define_method(mrb, e, "initialize", mrb_entropy_initialize, MRB_ARGS_NONE());
@@ -295,7 +295,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	MRB_SET_INSTANCE_TT(c, MRB_TT_DATA);
 	mrb_define_method(mrb, c, "initialize", mrb_ctrdrbg_initialize, MRB_ARGS_REQ(1));
 	mrb_define_singleton_method(mrb, (struct RObject*)c, "self_test", mrb_ctrdrbg_self_test, MRB_ARGS_NONE());
-	
+
 	s = mrb_define_class_under(mrb, p, "SSL", mrb->object_class);
 	MRB_SET_INSTANCE_TT(s, MRB_TT_DATA);
 	mrb_define_method(mrb, s, "initialize", mrb_ssl_initialize, MRB_ARGS_NONE());
@@ -320,5 +320,5 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	mrb_define_method(mrb, s, "close", mrb_ssl_close, MRB_ARGS_NONE());
 }
 
-void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {	
+void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {
 }
