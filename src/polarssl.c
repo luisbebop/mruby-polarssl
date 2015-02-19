@@ -271,6 +271,16 @@ static mrb_value mrb_ssl_bytes_available(mrb_state *mrb, mrb_value self) {
 	return mrb_fixnum_value(count);
 }
 
+static mrb_value mrb_ssl_fileno(mrb_state *mrb, mrb_value self) {
+	ssl_context *ssl;
+    mrb_int fd=0;
+
+	ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
+    fd = *((int *)ssl->p_recv);
+
+	return mrb_fixnum_value(fd);
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	struct RClass *p, *e, *c, *s;
 	
@@ -305,6 +315,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 	mrb_define_method(mrb, s, "write", mrb_ssl_write, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "read", mrb_ssl_read, MRB_ARGS_REQ(1));
 	mrb_define_method(mrb, s, "bytes_available", mrb_ssl_bytes_available, MRB_ARGS_NONE());
+	mrb_define_method(mrb, s, "fileno", mrb_ssl_fileno, MRB_ARGS_NONE());
 	mrb_define_method(mrb, s, "close_notify", mrb_ssl_close_notify, MRB_ARGS_NONE());
 	mrb_define_method(mrb, s, "close", mrb_ssl_close, MRB_ARGS_NONE());
 }
