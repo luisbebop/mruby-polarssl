@@ -10,6 +10,7 @@ MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
 
   spec.objs += %W(
     #{polarssl_src}/library/aes.c
+    #{polarssl_src}/library/aesni.c
     #{polarssl_src}/library/arc4.c
     #{polarssl_src}/library/asn1parse.c
     #{polarssl_src}/library/asn1write.c
@@ -27,11 +28,13 @@ MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
     #{polarssl_src}/library/ecdh.c
     #{polarssl_src}/library/ecdsa.c
     #{polarssl_src}/library/ecp.c
+    #{polarssl_src}/library/ecp_curves.c
     #{polarssl_src}/library/entropy.c
     #{polarssl_src}/library/entropy_poll.c
     #{polarssl_src}/library/error.c
     #{polarssl_src}/library/gcm.c
     #{polarssl_src}/library/havege.c
+    #{polarssl_src}/library/ripemd160.c
     #{polarssl_src}/library/md.c
     #{polarssl_src}/library/md2.c
     #{polarssl_src}/library/md4.c

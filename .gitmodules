@@ -1,0 +1,3 @@
+[submodule "polarssl"]
+	path = polarssl
+	url = git@github.com:ARMmbed/mbedtls.git
