@@ -281,8 +281,37 @@ static mrb_value mrb_ssl_fileno(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(fd);
 }
 
+static void mrb_ecdsa_free(mrb_state *mrb, void *ptr) {
+  ecdsa_context *ecdsa = ptr;
+
+  if (ecdsa != NULL) {
+    ecdsa_free(ecdsa);
+  }
+}
+
+static struct mrb_data_type mrb_ecdsa_type = { "SSL", mrb_ecdsa_free };
+
+static mrb_value mrb_ecdsa_initialize(mrb_state *mrb, mrb_value self) {
+  ecdsa_context *ecdsa;
+
+  ecdsa = (ecdsa_context *)DATA_PTR(self);
+
+  if (ecdsa) {
+    mrb_ecdsa_free(mrb, ecdsa);
+  }
+  DATA_TYPE(self) = &mrb_ecdsa_type;
+  DATA_PTR(self) = NULL;
+
+  ecdsa = (ssl_context *)mrb_malloc(mrb, sizeof(ecdsa_context));
+  DATA_PTR(self) = ecdsa;
+
+  ecdsa_init(ecdsa);
+
+  return self;
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
-  struct RClass *p, *e, *c, *s;
+  struct RClass *p, *e, *c, *s, *ecdsa;
 
   p = mrb_define_module(mrb, "PolarSSL");
 
@@ -318,6 +347,10 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, s, "fileno", mrb_ssl_fileno, MRB_ARGS_NONE());
   mrb_define_method(mrb, s, "close_notify", mrb_ssl_close_notify, MRB_ARGS_NONE());
   mrb_define_method(mrb, s, "close", mrb_ssl_close, MRB_ARGS_NONE());
+
+  ecdsa = mrb_define_class_under(mrb, p, "ECDSA", mrb->object_class);
+  MRB_SET_INSTANCE_TT(ecdsa, MRB_TT_DATA);
+  mrb_define_method(mrb, ecdsa, "initialize", mrb_ecdsa_initialize, MRB_ARGS_NONE());
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {
