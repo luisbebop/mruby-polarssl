@@ -107,7 +107,7 @@ if Object.const_defined?(:PolarSSL)
     rescue Exception => e
       err = e
     end
-    p "[BUG?expected Data?]#{e}"
+    #p "[BUG?expected Data?]#{e}"
     err.class == TypeError
   end
   
@@ -180,7 +180,9 @@ if Object.const_defined?(:PolarSSL)
     while chunk = ssl.read(1024)
       response << chunk
     end
-    p "https response size: #{response.size}"
+    response.size > 0
+    #debug
+    #p "https response size: #{response.size}"
   end
   
   assert('PolarSSL::SSL#close_notify') do 
@@ -194,7 +196,9 @@ if Object.const_defined?(:PolarSSL)
     ssl.set_socket(socket)
     ssl.handshake
     ssl.write("GET / HTTP/1.0\r\nHost: polarssl.org\r\n\r\n")
-    p ssl.read(4)
+    buf = ssl.read(4)
+    #debug
+    #p buf
     ssl.close_notify
   end
   
@@ -209,10 +213,11 @@ if Object.const_defined?(:PolarSSL)
     ssl.set_socket(socket)
     ssl.handshake
     ssl.write("GET / HTTP/1.0\r\nHost: polarssl.org\r\n\r\n")
-    p ssl.read(4)
+    buf = ssl.read(4)
+    #debug
+    #p buf
     ssl.close_notify
     socket.close
     ssl.close
   end
-      
 end
