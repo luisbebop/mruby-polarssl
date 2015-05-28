@@ -9,7 +9,7 @@ if __FILE__ == $0
 
   Dir.mkdir 'tmp'  unless File.exist?('tmp')
   unless File.exist?(dir)
-    system "git clone #{repository} #{dir}"
+    system "git clone #{repository} --branch 1.0.0 #{dir}"
   end
 
   exit system(%Q[cd #{dir}; MRUBY_CONFIG=#{File.expand_path __FILE__} ruby minirake #{build_args.join(' ')}])
