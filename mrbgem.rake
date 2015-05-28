@@ -7,7 +7,7 @@ MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
   spec.cc.include_paths << "#{polarssl_src}/include"
   spec.cc.include_paths << "#{build.root}/src"
   spec.cc.flags << '-D_FILE_OFFSET_BITS=64 -Wall -W -Wdeclaration-after-statement'
-  
+
   spec.objs += %W(
     #{polarssl_src}/library/aes.c
     #{polarssl_src}/library/arc4.c
