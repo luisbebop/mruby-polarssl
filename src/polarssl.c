@@ -12,6 +12,11 @@
 #include "polarssl/version.h"
 #include <sys/ioctl.h>
 
+/*ECDSA*/
+#include "polarssl/ecdsa.h"
+#include <string.h>
+#include <stdio.h>
+
 extern struct mrb_data_type mrb_io_type;
 
 static void mrb_ssl_free(mrb_state *mrb, void *ptr) {
@@ -301,7 +306,7 @@ static void mrb_ecdsa_free(mrb_state *mrb, void *ptr) {
 
 static struct mrb_data_type mrb_ecdsa_type = { "EC", mrb_ecdsa_free };
 
-static mrb_value mrb_ecdsa_initialize(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_ecdsa_alloc(mrb_state *mrb, mrb_value self) {
   ecdsa_context *ecdsa;
 
   ecdsa = (ecdsa_context *)DATA_PTR(self);
@@ -318,6 +323,51 @@ static mrb_value mrb_ecdsa_initialize(mrb_state *mrb, mrb_value self) {
   ecdsa_init(ecdsa);
 
   return self;
+}
+
+static mrb_value mrb_ecdsa_generate_key(mrb_state *mrb, mrb_value self) {
+  ctr_drbg_context *ctr_drbg;
+  ecdsa_context *ecdsa;
+  mrb_int curve=0;
+  mrb_value obj, curve_obj;
+  int ret;
+
+  ecdsa     = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
+  obj       = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@ctr_drbg"));
+  curve_obj = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@curve"));
+  ctr_drbg  = DATA_CHECK_GET_PTR(mrb, obj, &mrb_ctr_drbg_type, ctr_drbg_context);
+
+  if (mrb_fixnum_p(curve_obj)) {
+    curve = mrb_fixnum(curve_obj);
+  } else {
+    return mrb_false_value();
+  }
+
+  if(ecdsa_genkey(ecdsa, curve, ctr_drbg_random, ctr_drbg) == 0) {
+    return mrb_true_value();
+  } else {
+    return mrb_false_value();
+  }
+}
+
+static mrb_value mrb_ecdsa_public_key(mrb_state *mrb, mrb_value self) {
+  ecdsa_context *ecdsa;
+  unsigned char buf[300];
+  unsigned char str[300];
+  size_t len;
+  int i, j;
+  mrb_value public_key;
+
+  ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
+
+  if( ecp_point_write_binary( &ecdsa->grp, &ecdsa->Q,
+        POLARSSL_ECP_PF_COMPRESSED, &len, buf, sizeof(buf) ) != 0 )
+  {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "can't extract Public Key");
+    return mrb_false_value();
+  }
+
+  return mrb_str_new_cstr(mrb, &buf);
 }
 
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
@@ -361,7 +411,10 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 
   ecdsa = mrb_define_class_under(mrb, pkey, "EC", mrb->object_class);
   MRB_SET_INSTANCE_TT(ecdsa, MRB_TT_DATA);
-  mrb_define_method(mrb, ecdsa, "initialize", mrb_ecdsa_initialize, MRB_ARGS_NONE());
+  mrb_define_method(mrb, ecdsa, "alloc", mrb_ecdsa_alloc, MRB_ARGS_NONE());
+  mrb_define_method(mrb, ecdsa, "generate_key", mrb_ecdsa_generate_key, MRB_ARGS_NONE());
+  mrb_define_method(mrb, ecdsa, "public_key", mrb_ecdsa_public_key, MRB_ARGS_NONE());
+  /*mrb_define_method(mrb, ecdsa, "private_key", mrb_ecdsa_generate_key, MRB_ARGS_NONE());*/
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {
