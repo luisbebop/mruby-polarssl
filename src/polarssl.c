@@ -321,9 +321,10 @@ static mrb_value mrb_ecdsa_initialize(mrb_state *mrb, mrb_value self) {
 }
 
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
-  struct RClass *p, *e, *c, *s, *ecdsa;
+  struct RClass *p, *e, *c, *s, *pkey, *ecdsa;
 
   p = mrb_define_module(mrb, "PolarSSL");
+  pkey = mrb_define_module_under(mrb, p, "PKey");
 
   e = mrb_define_class_under(mrb, p, "Entropy", mrb->object_class);
   MRB_SET_INSTANCE_TT(e, MRB_TT_DATA);
@@ -358,7 +359,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, s, "close_notify", mrb_ssl_close_notify, MRB_ARGS_NONE());
   mrb_define_method(mrb, s, "close", mrb_ssl_close, MRB_ARGS_NONE());
 
-  ecdsa = mrb_define_class_under(mrb, p, "ECDSA", mrb->object_class);
+  ecdsa = mrb_define_class_under(mrb, pkey, "EC", mrb->object_class);
   MRB_SET_INSTANCE_TT(ecdsa, MRB_TT_DATA);
   mrb_define_method(mrb, ecdsa, "initialize", mrb_ecdsa_initialize, MRB_ARGS_NONE());
 }
