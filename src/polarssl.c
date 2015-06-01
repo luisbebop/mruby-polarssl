@@ -377,12 +377,15 @@ static mrb_value mrb_ecdsa_load_pem(mrb_state *mrb, mrb_value self) {
 static mrb_value mrb_ecdsa_public_key(mrb_state *mrb, mrb_value self) {
   ecdsa_context *ecdsa;
   unsigned char buf[300];
-  unsigned char str[300];
+  unsigned char str[600];
   size_t len;
   int i, j;
   mrb_value public_key;
 
   ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
+
+  memset(&str, 0, sizeof(str));
+  memset(&buf, 0, sizeof(buf));
 
   if( ecp_point_write_binary( &ecdsa->grp, &ecdsa->Q,
         POLARSSL_ECP_PF_COMPRESSED, &len, buf, sizeof(buf) ) != 0 )
@@ -391,7 +394,13 @@ static mrb_value mrb_ecdsa_public_key(mrb_state *mrb, mrb_value self) {
     return mrb_false_value();
   }
 
-  return mrb_str_new_cstr(mrb, &buf);
+  for(i=0, j=0; i < len; i++,j+=2) {
+    sprintf(&str[j], "%c%c", "0123456789ABCDEF" [buf[i] / 16],
+        "0123456789ABCDEF" [buf[i] % 16] );
+  }
+
+  return mrb_str_new(mrb, str, len*2);
+}
 }
 
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {

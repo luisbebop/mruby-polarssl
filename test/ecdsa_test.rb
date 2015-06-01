@@ -63,6 +63,10 @@ class EcdsaTest < MTest::Unit::TestCase
     assert_nil @e
   end
 
+  # @key.public_key.to_bn.to_s(16)
+  def test_public_key_bn_16_from_pem
+    assert_equal "0325C7741A422C72AAAB98B8346D8AF458767610004808B159B671BB26E54F9360", PolarSSL::PKey::EC.new(@pem).public_key
+  end
   end
 end
 
