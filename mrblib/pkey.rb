@@ -46,9 +46,11 @@ module PolarSSL
         check_pem(pem_or_curve)
       end
 
-      private
       def check_pem(pem_or_curve)
         @curve = CURVES[pem_or_curve]
+        unless @curve
+          load_pem(pem_or_curve)
+        end
       end
     end
   end

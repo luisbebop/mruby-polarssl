@@ -350,6 +350,30 @@ static mrb_value mrb_ecdsa_generate_key(mrb_state *mrb, mrb_value self) {
   }
 }
 
+static mrb_value mrb_ecdsa_load_pem(mrb_state *mrb, mrb_value self) {
+  ecdsa_context *ecdsa;
+  pk_context pkey;
+  mrb_value pem;
+  int ret = 0;
+
+  mrb_get_args(mrb, "S", &pem);
+
+  pk_init( &pkey );
+
+  ret = pk_parse_key(&pkey, RSTRING_PTR(pem), RSTRING_LEN(pem), NULL, 0);
+  if (ret == 0) {
+    ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
+    ret = ecdsa_from_keypair(ecdsa, pk_ec(pkey));
+    if (ret == 0) {
+      return mrb_true_value();
+    }
+  }
+
+  pk_free( &pkey );
+  mrb_raise(mrb, E_RUNTIME_ERROR, "can't parse pem");
+  return mrb_false_value();
+}
+
 static mrb_value mrb_ecdsa_public_key(mrb_state *mrb, mrb_value self) {
   ecdsa_context *ecdsa;
   unsigned char buf[300];
@@ -413,6 +437,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   MRB_SET_INSTANCE_TT(ecdsa, MRB_TT_DATA);
   mrb_define_method(mrb, ecdsa, "alloc", mrb_ecdsa_alloc, MRB_ARGS_NONE());
   mrb_define_method(mrb, ecdsa, "generate_key", mrb_ecdsa_generate_key, MRB_ARGS_NONE());
+  mrb_define_method(mrb, ecdsa, "load_pem", mrb_ecdsa_load_pem, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, ecdsa, "public_key", mrb_ecdsa_public_key, MRB_ARGS_NONE());
   /*mrb_define_method(mrb, ecdsa, "private_key", mrb_ecdsa_generate_key, MRB_ARGS_NONE());*/
 }

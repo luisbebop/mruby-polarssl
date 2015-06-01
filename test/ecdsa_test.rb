@@ -1,7 +1,8 @@
 
 class EcdsaTest < MTest::Unit::TestCase
   def setup
-    @pem = "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEIFFDAmjPwMim1/VD/7ZUvzHPSObhfG9BZkwnke7bjwUgoAcGBSuBBAAK\noUQDQgAEJcd0GkIscqqrmLg0bYr0WHZ2EABICLFZtnG7JuVPk2DuVTYxs9dHXpsh\njEzhJ1U+ictJAvHbh+A2IC64lO5oFQ                            =  = \n-----END EC PRIVATE KEY-----\n"
+    @e = nil
+    @pem = "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEIFFDAmjPwMim1/VD/7ZUvzHPSObhfG9BZkwnke7bjwUgoAcGBSuBBAAK\noUQDQgAEJcd0GkIscqqrmLg0bYr0WHZ2EABICLFZtnG7JuVPk2DuVTYxs9dHXpsh\njEzhJ1U+ictJAvHbh+A2IC64lO5oFQ==\n-----END EC PRIVATE KEY-----\n"
   end
 
   def test_ctr_drbg_pers
@@ -52,6 +53,14 @@ class EcdsaTest < MTest::Unit::TestCase
     end
     assert_nil @e
     assert_instance_of String, pubkey
+  end
+
+  def test_ec_key_from_pem
+    begin
+      PolarSSL::PKey::EC.new(@pem)
+    rescue => @e
+    end
+    assert_nil @e
   end
 
   end
