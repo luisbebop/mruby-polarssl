@@ -37,7 +37,7 @@ module PolarSSL
         "secp256k1" => POLARSSL_ECP_DP_SECP256K1,
       }
 
-      attr_reader :curve, :entropy, :ctr_drbg, :pem, :private_key
+      attr_reader :curve, :entropy, :ctr_drbg, :pem
 
       def initialize(pem_or_curve = "secp256k1")
         alloc
