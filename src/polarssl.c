@@ -299,7 +299,7 @@ static void mrb_ecdsa_free(mrb_state *mrb, void *ptr) {
   }
 }
 
-static struct mrb_data_type mrb_ecdsa_type = { "SSL", mrb_ecdsa_free };
+static struct mrb_data_type mrb_ecdsa_type = { "EC", mrb_ecdsa_free };
 
 static mrb_value mrb_ecdsa_initialize(mrb_state *mrb, mrb_value self) {
   ecdsa_context *ecdsa;
