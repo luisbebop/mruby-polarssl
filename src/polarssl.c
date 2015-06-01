@@ -3,6 +3,9 @@
 #include "mruby/data.h"
 #include "mruby/string.h"
 #include "mruby/ext/io.h"
+
+#include "mruby/variable.h"
+
 #include "polarssl/entropy.h"
 #include "polarssl/ctr_drbg.h"
 #include "polarssl/ssl.h"
@@ -66,7 +69,7 @@ static mrb_value mrb_entropy_initialize(mrb_state *mrb, mrb_value self) {
 static mrb_value mrb_ctrdrbg_initialize(mrb_state *mrb, mrb_value self) {
   ctr_drbg_context *ctr_drbg;
   entropy_context *entropy_p;
-  mrb_value entp;
+  mrb_value entp, pers;
   int ret;
 
   ctr_drbg = (ctr_drbg_context *)DATA_PTR(self);
@@ -76,7 +79,8 @@ static mrb_value mrb_ctrdrbg_initialize(mrb_state *mrb, mrb_value self) {
   DATA_TYPE(self) = &mrb_ctr_drbg_type;
   DATA_PTR(self) = NULL;
 
-  mrb_get_args(mrb, "o", &entp);
+  mrb_get_args(mrb, "o|S", &entp, &pers);
+
   if (mrb_type(entp) != MRB_TT_DATA) {
     mrb_raise(mrb, E_TYPE_ERROR, "wrong argument class");
   }
@@ -85,7 +89,13 @@ static mrb_value mrb_ctrdrbg_initialize(mrb_state *mrb, mrb_value self) {
   ctr_drbg = (ctr_drbg_context *)mrb_malloc(mrb, sizeof(ctr_drbg_context));
   DATA_PTR(self) = ctr_drbg;
 
-  ret = ctr_drbg_init(ctr_drbg, entropy_func, entropy_p, NULL, 0 );
+  if (mrb_string_p(pers)) {
+    mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@pers"), pers);
+    ret = ctr_drbg_init(ctr_drbg, entropy_func, entropy_p, RSTRING_PTR(pers), RSTRING_LEN(pers));
+  } else {
+    ret = ctr_drbg_init(ctr_drbg, entropy_func, entropy_p, NULL, 0 );
+  }
+
   if (ret == POLARSSL_ERR_CTR_DRBG_ENTROPY_SOURCE_FAILED ) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "Could not initialize entropy source");	
   }
@@ -322,7 +332,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 
   c = mrb_define_class_under(mrb, p, "CtrDrbg", mrb->object_class);
   MRB_SET_INSTANCE_TT(c, MRB_TT_DATA);
-  mrb_define_method(mrb, c, "initialize", mrb_ctrdrbg_initialize, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, c, "initialize", mrb_ctrdrbg_initialize, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1));
   mrb_define_singleton_method(mrb, (struct RObject*)c, "self_test", mrb_ctrdrbg_self_test, MRB_ARGS_NONE());
 
   s = mrb_define_class_under(mrb, p, "SSL", mrb->object_class);
