@@ -312,7 +312,7 @@ static mrb_value mrb_ecdsa_initialize(mrb_state *mrb, mrb_value self) {
   DATA_TYPE(self) = &mrb_ecdsa_type;
   DATA_PTR(self) = NULL;
 
-  ecdsa = (ssl_context *)mrb_malloc(mrb, sizeof(ecdsa_context));
+  ecdsa = (ecdsa_context *)mrb_malloc(mrb, sizeof(ecdsa_context));
   DATA_PTR(self) = ecdsa;
 
   ecdsa_init(ecdsa);
