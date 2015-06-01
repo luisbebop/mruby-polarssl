@@ -47,7 +47,7 @@ class EcdsaTest < MTest::Unit::TestCase
   def test_generate_key_get_public_key
     begin
       key = PolarSSL::PKey::EC.new
-      assert(key.generate_key)
+      assert key.generate_key
       pubkey = key.public_key
     rescue => @e
     end
