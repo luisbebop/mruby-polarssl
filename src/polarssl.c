@@ -403,12 +403,11 @@ static mrb_value mrb_ecdsa_public_key(mrb_state *mrb, mrb_value self) {
 }
 
 static mrb_value mrb_ecdsa_private_key(mrb_state *mrb, mrb_value self) {
-  ecdsa_context *ecdsa;
   unsigned char buf[300];
   unsigned char str[600];
-  size_t len;
-  int i, j;
+  ecdsa_context *ecdsa;
   mrb_value public_key;
+  size_t len, i, j;
 
   ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
 
@@ -429,6 +428,36 @@ static mrb_value mrb_ecdsa_private_key(mrb_state *mrb, mrb_value self) {
 
   /*return mrb_str_new(mrb, str, len*2);*/
   return mrb_str_new(mrb, &str[2], len*2 - 2);
+}
+
+static mrb_value mrb_ecdsa_sign(mrb_state *mrb, mrb_value self) {
+  ctr_drbg_context *ctr_drbg;
+  unsigned char buf[512], str[1024];
+  int i, j, len=0, ret=0;
+  ecdsa_context *ecdsa;
+  mrb_value hash, obj;
+
+  memset(buf, 0, sizeof( buf ) );
+
+  mrb_get_args(mrb, "S", &hash);
+
+  obj      = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@ctr_drbg"));
+  ecdsa    = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
+  ctr_drbg = DATA_CHECK_GET_PTR(mrb, obj, &mrb_ctr_drbg_type, ctr_drbg_context);
+
+  ret = ecdsa_write_signature(ecdsa, RSTRING_PTR(hash), RSTRING_LEN(hash),
+      buf, &len, ctr_drbg_random, ctr_drbg);
+
+  for(i=0, j=0; i < len; i++,j+=2) {
+    sprintf(&str[j], "%c%c", "0123456789ABCDEF" [buf[i] / 16],
+        "0123456789ABCDEF" [buf[i] % 16] );
+  }
+
+  if (ret == 0) {
+    return mrb_str_new(mrb, &str, len*2);
+  } else {
+    return mrb_fixnum_value(ret);
+  }
 }
 
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
@@ -477,6 +506,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, ecdsa, "load_pem", mrb_ecdsa_load_pem, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, ecdsa, "public_key", mrb_ecdsa_public_key, MRB_ARGS_NONE());
   mrb_define_method(mrb, ecdsa, "private_key", mrb_ecdsa_private_key, MRB_ARGS_NONE());
+  mrb_define_method(mrb, ecdsa, "sign", mrb_ecdsa_sign, MRB_ARGS_REQ(1));
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {

@@ -72,6 +72,17 @@ class EcdsaTest < MTest::Unit::TestCase
   def test_private_key_to_s_16_from_pem
     assert_equal "51430268CFC0C8A6D7F543FFB654BF31CF48E6E17C6F41664C2791EEDB8F0520", PolarSSL::PKey::EC.new(@pem).private_key
   end
+
+  def test_private_key_to_s_16_from_pem
+    begin
+      key = PolarSSL::PKey::EC.new(@pem)
+      @sig = key.sign("1234")
+    rescue => @e
+    end
+    assert_nil @e
+    assert_not_equal nil,  @sig
+    assert_instance_of String, @sig
+  end
 end
 
 if $ok_test
