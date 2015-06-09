@@ -88,7 +88,7 @@ if Object.const_defined?(:PolarSSL)
     ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
   end
 
-  assert('PolarSSL::SSL#set_rng') do 
+  assert('PolarSSL::SSL#set_rng') do
     entropy = PolarSSL::Entropy.new
     ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
     ssl = PolarSSL::SSL.new
@@ -98,7 +98,7 @@ if Object.const_defined?(:PolarSSL)
     ssl.set_rng(ctr_drbg)
   end
 
-  assert('PolarSSL::SSL#set_rng err') do 
+  assert('PolarSSL::SSL#set_rng err') do
     err = nil
     begin
       ssl = PolarSSL::SSL.new
@@ -110,7 +110,7 @@ if Object.const_defined?(:PolarSSL)
     err.class == TypeError
   end
 
-  assert('PolarSSL::SSL#set_socket') do 
+  assert('PolarSSL::SSL#set_socket') do
     socket = TCPSocket.new('polarssl.org', 443)
     entropy = PolarSSL::Entropy.new
     ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
@@ -121,7 +121,7 @@ if Object.const_defined?(:PolarSSL)
     ssl.set_socket(socket)
   end
 
-  assert('PolarSSL::SSL#handshake') do 
+  assert('PolarSSL::SSL#handshake') do
     socket = TCPSocket.new('polarssl.org', 443)
     entropy = PolarSSL::Entropy.new
     ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
@@ -133,7 +133,8 @@ if Object.const_defined?(:PolarSSL)
     ssl.handshake
   end
 
-  assert('PolarSSL::SSL#handshake err') do 
+  assert('PolarSSL::SSL#handshake err') do
+    @e = nil
     socket = TCPSocket.new('polarssl.org', 80)
     entropy = PolarSSL::Entropy.new
     ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
@@ -142,16 +143,14 @@ if Object.const_defined?(:PolarSSL)
     ssl.set_authmode(PolarSSL::SSL::SSL_VERIFY_NONE)
     ssl.set_rng(ctr_drbg)
     ssl.set_socket(socket)
-    err = nil
     begin
       ssl.handshake
-    rescue Exception => e
-      err = e
+    rescue => @e
     end
-    err.class == PolarSSL::SSL::Error
+    @e.class == PolarSSL::SSL::Error
   end
 
-  assert('PolarSSL::SSL#write') do 
+  assert('PolarSSL::SSL#write') do
     socket = TCPSocket.new('polarssl.org', 443)
     entropy = PolarSSL::Entropy.new
     ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
@@ -164,7 +163,7 @@ if Object.const_defined?(:PolarSSL)
     ssl.write "foo"
   end
 
-  assert('PolarSSL::SSL#read') do 
+  assert('PolarSSL::SSL#read') do
     socket = TCPSocket.new('polarssl.org', 443)
     entropy = PolarSSL::Entropy.new
     ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
@@ -184,7 +183,7 @@ if Object.const_defined?(:PolarSSL)
     #p "https response size: #{response.size}"
   end
 
-  assert('PolarSSL::SSL#close_notify') do 
+  assert('PolarSSL::SSL#close_notify') do
     socket = TCPSocket.new('polarssl.org', 443)
     entropy = PolarSSL::Entropy.new
     ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
@@ -201,7 +200,7 @@ if Object.const_defined?(:PolarSSL)
     ssl.close_notify
   end
 
-  assert('PolarSSL::SSL#close') do 
+  assert('PolarSSL::SSL#close') do
     socket = TCPSocket.new('polarssl.org', 443)
     entropy = PolarSSL::Entropy.new
     ctr_drbg = PolarSSL::CtrDrbg.new(entropy)
@@ -220,3 +219,4 @@ if Object.const_defined?(:PolarSSL)
     ssl.close
   end
 end
+
