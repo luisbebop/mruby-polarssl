@@ -20,10 +20,9 @@ MRuby::Build.new do |conf|
   conf.gembox 'default'
 
   conf.gem :git => 'git@github.com:iij/mruby-io.git'
+  conf.gem :git => 'git@github.com:iij/mruby-pack.git'
   conf.gem :git => 'git@github.com:iij/mruby-socket.git'
   conf.gem :git => 'git@github.com:iij/mruby-mtest.git'
-  conf.gem :git => 'git@github.com:iij/mruby-pack.git'
-  conf.gem :git => 'git@github.com:masamitsu-murase/mruby-hs-regexp.git'
 
   conf.gem File.expand_path(File.dirname(__FILE__))
 end
