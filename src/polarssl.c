@@ -17,6 +17,13 @@
 #include <string.h>
 #include <stdio.h>
 
+#if MRUBY_RELEASE_NO < 10000
+static struct RClass *mrb_module_get(mrb_state *mrb, const char *name) {
+  return mrb_class_get(mrb, name);
+}
+#endif
+
+
 extern struct mrb_data_type mrb_io_type;
 
 static void mrb_ssl_free(mrb_state *mrb, void *ptr) {
