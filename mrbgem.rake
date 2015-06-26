@@ -18,6 +18,7 @@ MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
     #{polarssl_src}/library/bignum.c
     #{polarssl_src}/library/blowfish.c
     #{polarssl_src}/library/camellia.c
+    #{polarssl_src}/library/ccm.c
     #{polarssl_src}/library/certs.c
     #{polarssl_src}/library/cipher.c
     #{polarssl_src}/library/cipher_wrap.c
@@ -34,13 +35,13 @@ MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
     #{polarssl_src}/library/error.c
     #{polarssl_src}/library/gcm.c
     #{polarssl_src}/library/havege.c
+    #{polarssl_src}/library/hmac_drbg.c
     #{polarssl_src}/library/ripemd160.c
     #{polarssl_src}/library/md.c
     #{polarssl_src}/library/md2.c
     #{polarssl_src}/library/md4.c
     #{polarssl_src}/library/md5.c
     #{polarssl_src}/library/md_wrap.c
-    #{polarssl_src}/library/memory.c
     #{polarssl_src}/library/memory_buffer_alloc.c
     #{polarssl_src}/library/net.c
     #{polarssl_src}/library/oid.c
