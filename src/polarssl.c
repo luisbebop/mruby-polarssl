@@ -10,7 +10,13 @@
 #include "polarssl/ctr_drbg.h"
 #include "polarssl/ssl.h"
 #include "polarssl/version.h"
+
+#if defined(_WIN32)
+#include <winsock2.h>
+#define ioctl ioctlsocket
+#else
 #include <sys/ioctl.h>
+#endif
 
 /*ECDSA*/
 #include "polarssl/ecdsa.h"
