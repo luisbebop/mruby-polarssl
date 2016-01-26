@@ -5,6 +5,7 @@ MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
   polarssl_dirname = 'polarssl'
   polarssl_src = "#{spec.dir}/#{polarssl_dirname}"
   spec.cc.include_paths << "#{polarssl_src}/include"
+  spec.cc.include_paths << "#{polarssl_src}/../../mruby-io/include"
   spec.cc.include_paths << "#{build.root}/src"
   spec.cc.flags << '-D_FILE_OFFSET_BITS=64 -Wall -W -Wdeclaration-after-statement'
 
