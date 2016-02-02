@@ -291,10 +291,11 @@ static mrb_value mrb_ssl_close(mrb_state *mrb, mrb_value self) {
 
 static mrb_value mrb_ssl_bytes_available(mrb_state *mrb, mrb_value self) {
   ssl_context *ssl;
-  mrb_int count=0;
+  mrb_int count=0, fd=0;
 
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-  ioctl(*((int *)ssl->p_recv), FIONREAD, &count);
+  fd = *((int *)ssl->p_recv);
+  if (fd != NULL) ioctl(fd, FIONREAD, &count);
 
   return mrb_fixnum_value(count);
 }
