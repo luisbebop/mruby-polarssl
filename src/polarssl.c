@@ -20,6 +20,7 @@
 
 /*ECDSA*/
 #include "polarssl/ecdsa.h"
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -251,21 +252,26 @@ static mrb_value mrb_ssl_write(mrb_state *mrb, mrb_value self) {
 static mrb_value mrb_ssl_read(mrb_state *mrb, mrb_value self) {
   ssl_context *ssl;
   mrb_int maxlen = 0;
-  mrb_value buf;
+  mrb_value value;
+  char *buf;
   int ret;
 
   mrb_get_args(mrb, "i", &maxlen);
-  buf = mrb_str_buf_new(mrb, maxlen);
+
+  buf = malloc(maxlen);
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-  ret = ssl_read(ssl, (unsigned char *)RSTRING_PTR(buf), maxlen);
-  if ( ret == 0 || ret == POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY) {
-    return mrb_nil_value();
+  ret = ssl_read(ssl, buf, maxlen);
+  if ( ret == 0 || ret == POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY || buf == NULL) {
+    value = mrb_nil_value();
   } else if (ret < 0) {
     mrb_raise(mrb, E_SSL_ERROR, "ssl_read() returned E_SSL_ERROR");
+    value = mrb_nil_value();
   } else {
-    mrb_str_resize(mrb, buf, ret);
+    value = mrb_str_new(mrb, buf, ret);
   }
-  return buf;
+
+  if(buf != NULL) free(buf);
+  return value;
 }
 
 static mrb_value mrb_ssl_close_notify(mrb_state *mrb, mrb_value self) {
