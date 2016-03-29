@@ -9,6 +9,7 @@
 #include "polarssl/entropy.h"
 #include "polarssl/ctr_drbg.h"
 #include "polarssl/ssl.h"
+#include "polarssl/des.h"
 #include "polarssl/version.h"
 
 #if defined(_WIN32)
@@ -480,8 +481,136 @@ static mrb_value mrb_ecdsa_sign(mrb_state *mrb, mrb_value self) {
   }
 }
 
+static mrb_value mrb_des_encrypt(mrb_state *mrb, mrb_value self) {
+  mrb_value mode, key, source, dest, iv;
+  unsigned char output[100];
+  des_context ctx;
+  mrb_int len=8;
+
+  memset(output, 0, sizeof(output));
+
+  mrb_get_args(mrb, "SSSS", &mode, &key, &source, &iv);
+
+  des_init(&ctx);
+  des_setkey_enc(&ctx, RSTRING_PTR(key));
+
+  if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "CBC", 3)) == 0) {
+    des_crypt_cbc(&ctx, DES_ENCRYPT, RSTRING_LEN(source), RSTRING_PTR(iv),
+        RSTRING_PTR(source), output);
+    len = RSTRING_LEN(source);
+  } else if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "ECB", 3)) == 0) {
+    des_crypt_ecb(&ctx, RSTRING_PTR(source), output);
+  } else {
+    des_free(&ctx);
+    return mrb_nil_value();
+  }
+
+  des_free(&ctx);
+  return mrb_str_new(mrb, output, len);
+}
+
+static mrb_value mrb_des_decrypt(mrb_state *mrb, mrb_value self) {
+  mrb_value mode, key, source, dest, iv;
+  unsigned char output[100];
+  des_context ctx;
+  mrb_int len=8;
+
+  memset(output, 0, sizeof(output));
+
+  mrb_get_args(mrb, "SSSS", &mode, &key, &source, &iv);
+
+  des_init(&ctx);
+  des_setkey_dec(&ctx, RSTRING_PTR(key));
+
+  if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "CBC", 3)) == 0) {
+    des_crypt_cbc(&ctx, DES_DECRYPT, RSTRING_LEN(source), RSTRING_PTR(iv),
+        RSTRING_PTR(source), output);
+    len = RSTRING_LEN(source);
+  } else if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "ECB", 3)) == 0) {
+    des_crypt_ecb(&ctx, RSTRING_PTR(source), output);
+  } else {
+    des_free(&ctx);
+    return mrb_nil_value();
+  }
+
+  des_free(&ctx);
+  return mrb_str_new(mrb, output, len);
+}
+
+static mrb_value mrb_des3_encrypt(mrb_state *mrb, mrb_value self) {
+  mrb_value mode, key, source, dest, iv;
+  unsigned char output[100];
+  des3_context ctx;
+  mrb_int len=16;
+
+  memset(output, 0, sizeof(output));
+
+  mrb_get_args(mrb, "SSSS", &mode, &key, &source, &iv);
+
+  des3_init(&ctx);
+  if (RSTRING_LEN(key) == 16) {
+    des3_set2key_enc(&ctx, RSTRING_PTR(key));
+  } else if (RSTRING_LEN(key) == 24) {
+    des3_set3key_enc(&ctx, RSTRING_PTR(key));
+  } else {
+    des3_free(&ctx);
+    return mrb_nil_value();
+  }
+
+  if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "CBC", 3)) == 0) {
+    des3_crypt_cbc(&ctx, DES_ENCRYPT, RSTRING_LEN(source), RSTRING_PTR(iv),
+        RSTRING_PTR(source), output);
+    len = RSTRING_LEN(source);
+  } else if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "ECB", 3)) == 0) {
+    des3_crypt_ecb(&ctx, RSTRING_PTR(source), output);
+    len = 8;
+  } else {
+    des3_free(&ctx);
+    return mrb_nil_value();
+  }
+
+  des3_free(&ctx);
+  return mrb_str_new(mrb, output, len);
+}
+
+static mrb_value mrb_des3_decrypt(mrb_state *mrb, mrb_value self) {
+  mrb_value mode, key, source, dest, iv;
+  unsigned char output[100];
+  des3_context ctx;
+  mrb_int len=16;
+
+  memset(output, 0, sizeof(output));
+
+  mrb_get_args(mrb, "SSSS", &mode, &key, &source, &iv);
+
+  des3_init(&ctx);
+  if (RSTRING_LEN(key) == 16) {
+    des3_set2key_dec(&ctx, RSTRING_PTR(key));
+  } else if (RSTRING_LEN(key) == 24) {
+    des3_set3key_dec(&ctx, RSTRING_PTR(key));
+  } else {
+    des3_free(&ctx);
+    return mrb_nil_value();
+  }
+
+  if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "CBC", 3)) == 0) {
+    des3_crypt_cbc(&ctx, DES_DECRYPT, RSTRING_LEN(source), RSTRING_PTR(iv),
+        RSTRING_PTR(source), output);
+    len = RSTRING_LEN(source);
+  } else if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "ECB", 3)) == 0) {
+    des3_crypt_ecb(&ctx, RSTRING_PTR(source), output);
+    len = 8;
+  } else {
+    des3_free(&ctx);
+    return mrb_nil_value();
+  }
+
+  des3_free(&ctx);
+  return mrb_str_new(mrb, output, len);
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
-  struct RClass *p, *e, *c, *s, *pkey, *ecdsa;
+  struct RClass *p, *e, *c, *s, *pkey, *ecdsa, *cipher, *des, *des3;
 
   p = mrb_define_module(mrb, "PolarSSL");
   pkey = mrb_define_module_under(mrb, p, "PKey");
@@ -527,6 +656,16 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, ecdsa, "public_key", mrb_ecdsa_public_key, MRB_ARGS_NONE());
   mrb_define_method(mrb, ecdsa, "private_key", mrb_ecdsa_private_key, MRB_ARGS_NONE());
   mrb_define_method(mrb, ecdsa, "sign", mrb_ecdsa_sign, MRB_ARGS_REQ(1));
+
+  cipher = mrb_define_class_under(mrb, p, "Cipher", mrb->object_class);
+
+  des = mrb_define_class_under(mrb, cipher, "DES", cipher);
+  mrb_define_class_method(mrb, des, "encrypt", mrb_des_encrypt, MRB_ARGS_REQ(4));
+  mrb_define_class_method(mrb, des, "decrypt", mrb_des_decrypt, MRB_ARGS_REQ(4));
+
+  des3 = mrb_define_class_under(mrb, cipher, "DES3", cipher);
+  mrb_define_class_method(mrb, des3, "encrypt", mrb_des3_encrypt, MRB_ARGS_REQ(4));
+  mrb_define_class_method(mrb, des3, "decrypt", mrb_des3_decrypt, MRB_ARGS_REQ(4));
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {
