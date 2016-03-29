@@ -58,25 +58,19 @@ socket.close
 ssl.close
 ```
 
-### Encrypting data (WIP)
+### Encrypting data
 
 The `PolarSSL::Cipher` class lets you encrypt data with a wide range of
-encryption standards like AES, Blowfish and DES.
+encryption standards DES-CBC, DES-ECB, DES3-CBC and DES3-ECB.
 
-This sample encrypts a given plaintext with AES128 in CTR mode:
+This sample encrypts a given plaintext with DES-ECB:
 
 ```ruby
-cipher = PolarSSL::Cipher.new("AES-128-CTR")
-
-my_iv = SecureRandom.random_bytes(16)
-
-cipher.reset(my_iv)
-cipher.setkey("my16bytekey23456", 128, PolarSSL::Cipher::OPERATION_ENCRYPT)
-cipher.update("some secret message I want to keep")
-encrypted_data = cipher.finish
-
-encoded_encrypted_data = Base64.encode64(encrypted_data)
-encoded_iv = Base64.encode64(my_iv)
+cipher = PolarSSL::Cipher.new("DES-ECB")
+cipher.encrypt
+cipher.key = "0123456789ABCDEF"
+cipher.update("1111111111111111")
+# => "17668DFC7292532D"
 ```
 
 ## License
