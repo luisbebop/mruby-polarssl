@@ -10,6 +10,7 @@
 #include "polarssl/ctr_drbg.h"
 #include "polarssl/ssl.h"
 #include "polarssl/des.h"
+#include "polarssl/base64.h"
 #include "polarssl/version.h"
 
 #if defined(_WIN32)
@@ -609,8 +610,38 @@ static mrb_value mrb_des3_decrypt(mrb_state *mrb, mrb_value self) {
   return mrb_str_new(mrb, output, len);
 }
 
+static mrb_value mrb_base64_encode(mrb_state *mrb, mrb_value self) {
+  mrb_value src;
+  size_t len;
+
+  int argc = mrb_get_args(mrb, "S", &src);
+
+  unsigned char buffer[RSTRING_LEN(src) * 3 + 1];
+  memset(buffer, 0, sizeof(buffer));
+
+  len = sizeof(buffer);
+  base64_encode(buffer, &len, RSTRING_PTR(src), RSTRING_LEN(src));
+
+  return mrb_str_new(mrb, buffer, len);
+}
+
+static mrb_value mrb_base64_decode(mrb_state *mrb, mrb_value self) {
+  mrb_value src;
+  size_t len;
+
+  int argc = mrb_get_args(mrb, "S", &src);
+
+  unsigned char buffer[RSTRING_LEN(src) * 3 + 1];
+  memset(buffer, 0, sizeof(buffer));
+
+  len = sizeof(buffer);
+  base64_decode(buffer, &len, RSTRING_PTR(src), RSTRING_LEN(src));
+
+  return mrb_str_new(mrb, buffer, len);
+}
+
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
-  struct RClass *p, *e, *c, *s, *pkey, *ecdsa, *cipher, *des, *des3;
+  struct RClass *p, *e, *c, *s, *pkey, *ecdsa, *cipher, *des, *des3, *base64;
 
   p = mrb_define_module(mrb, "PolarSSL");
   pkey = mrb_define_module_under(mrb, p, "PKey");
@@ -666,6 +697,10 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   des3 = mrb_define_class_under(mrb, cipher, "DES3", cipher);
   mrb_define_class_method(mrb, des3, "encrypt", mrb_des3_encrypt, MRB_ARGS_REQ(4));
   mrb_define_class_method(mrb, des3, "decrypt", mrb_des3_decrypt, MRB_ARGS_REQ(4));
+
+  base64 = mrb_define_module_under(mrb, p, "Base64");
+  mrb_define_class_method(mrb, base64, "encode", mrb_base64_encode, MRB_ARGS_REQ(1));
+  mrb_define_class_method(mrb, base64, "decode", mrb_base64_decode, MRB_ARGS_REQ(1));
 }
 
 void mrb_mruby_polarssl_gem_final(mrb_state *mrb) {
