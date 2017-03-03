@@ -40,6 +40,7 @@ static void mrb_ssl_free(mrb_state *mrb, void *ptr) {
 
   if (ssl != NULL) {
     ssl_free(ssl);
+    mrb_free(mrb, ssl);
   }
 }
 
@@ -293,7 +294,6 @@ static mrb_value mrb_ssl_close(mrb_state *mrb, mrb_value self) {
   ssl_context *ssl;
 
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-  memset(ssl, 0, sizeof(ssl_context));
   return mrb_true_value();
 }
 
