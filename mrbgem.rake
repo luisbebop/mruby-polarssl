@@ -81,5 +81,5 @@ MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
   spec.add_dependency 'mruby-string-ext', :core => 'mruby-string-ext'
   spec.add_dependency 'mruby-io', :mgem => 'mruby-io'
   spec.add_dependency 'mruby-socket', :mgem => 'mruby-socket'
-  spec.add_dependency 'mruby-mtest', :mgem => 'mruby-mtest'
+  spec.add_test_dependency 'mruby-mtest', :mgem => 'mruby-mtest'
 end
