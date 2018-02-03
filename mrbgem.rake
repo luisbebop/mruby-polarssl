@@ -79,7 +79,7 @@ MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
   ).map { |f| f.relative_path_from(dir).pathmap("#{build_dir}/%X.o") }
 
   spec.add_dependency 'mruby-string-ext', :core => 'mruby-string-ext'
-  spec.add_dependency 'mruby-io', :mgem => 'mruby-io'
-  spec.add_dependency 'mruby-socket', :mgem => 'mruby-socket'
+  spec.add_dependency 'mruby-io', :core => 'mruby-io'
+  spec.add_dependency 'mruby-socket', :core => 'mruby-socket'
   spec.add_test_dependency 'mruby-mtest', :mgem => 'mruby-mtest'
 end
