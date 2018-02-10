@@ -323,6 +323,7 @@ static void mrb_ecdsa_free(mrb_state *mrb, void *ptr) {
 
   if (ecdsa != NULL) {
     ecdsa_free(ecdsa);
+    mrb_free(mrb, ptr);
   }
 }
 
@@ -387,6 +388,7 @@ static mrb_value mrb_ecdsa_load_pem(mrb_state *mrb, mrb_value self) {
     ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
     ret = ecdsa_from_keypair(ecdsa, pk_ec(pkey));
     if (ret == 0) {
+      pk_free( &pkey );
       return mrb_true_value();
     }
   }
