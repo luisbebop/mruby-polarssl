@@ -3,7 +3,7 @@ mruby-polarssl
 
 ## Description
 
-With PolarSSL for mruby, you can use SSL and cryptography functionality from PolarSSL in your mruby programs.
+Mbedtls (AKA PolarSSL) port for mruby, with this library your are able to use SSL/TLS and any other crypto functionality in the mruby runtime
 
 ## Features
 
@@ -75,24 +75,9 @@ cipher.update("1111111111111111")
 
 ## License
 
-*Please note*: PolarSSL itself is released as GPL or a Commercial License.
-You will need to take this into account when using PolarSSL and this mruby extension in your
-own software.
+Under Apache 2.0 license, same as mbedtls license
 
 ```
-mruby-polarssl - A mruby extension for using PolarSSL.
-Copyright (C) 2013  Luis Silva
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+mruby-polarssl - A mruby extension for using mbedtls (AKA PolarSSL).
+Copyright (C) 20139  Luis Silva
 ```
