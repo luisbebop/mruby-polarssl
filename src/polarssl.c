@@ -36,13 +36,17 @@ static struct RClass *mrb_module_get(mrb_state *mrb, const char *name) {
 }
 #endif
 
-
 extern struct mrb_data_type mrb_io_type;
 
 static void mrb_ssl_free(mrb_state *mrb, void *ptr) {
   mbedtls_ssl_context *ssl = ptr;
 
   if (ssl != NULL) {
+    if (ssl->conf != NULL) {
+      mbedtls_ssl_config_free(ssl->conf);
+      mrb_free(mrb, ssl->conf);
+    }
+
     mbedtls_ssl_free(ssl);
     mrb_free(mrb, ssl);
   }
@@ -115,6 +119,8 @@ static mrb_value mrb_ctrdrbg_initialize(mrb_state *mrb, mrb_value self) {
   ctr_drbg = (mbedtls_ctr_drbg_context *)mrb_malloc(mrb, sizeof(mbedtls_ctr_drbg_context));
   DATA_PTR(self) = ctr_drbg;
 
+  mbedtls_ctr_drbg_init(ctr_drbg);
+
   if (mrb_string_p(pers)) {
     mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@pers"), pers);
     ret = mbedtls_ctr_drbg_seed(ctr_drbg, mbedtls_entropy_func, entropy_p, (unsigned char *)RSTRING_PTR(pers), RSTRING_LEN(pers));
@@ -143,7 +149,6 @@ static mrb_value mrb_ctrdrbg_self_test() {
 #define E_SSL_ERROR (mrb_class_get_under(mrb,mrb_class_get_under(mrb,mrb_module_get(mrb, "PolarSSL"),"SSL"), "Error"))
 
 static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
-  int ret;
   mbedtls_ssl_context *ssl;
   mbedtls_ssl_config *conf;
 
@@ -161,12 +166,18 @@ static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
   ssl = (mbedtls_ssl_context *)mrb_malloc(mrb, sizeof(mbedtls_ssl_context));
   DATA_PTR(self) = ssl;
 
-  ret = ssl_init(ssl);
-  if (ret == POLARSSL_ERR_SSL_MALLOC_FAILED) {
-    mrb_raise(mrb, E_MALLOC_FAILED, "ssl_init() memory allocation failed.");
-  }
+  mbedtls_ssl_init(ssl);
 
-#if POLARSSL_VERSION_MAJOR == 1 && POLARSSL_VERSION_MINOR == 1
+  conf = (mbedtls_ssl_config *)mrb_malloc(mrb, sizeof(mbedtls_ssl_config));
+  mbedtls_ssl_config_init( conf );
+
+  mbedtls_ssl_config_defaults( conf, MBEDTLS_SSL_IS_CLIENT,
+      MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT );
+
+  mbedtls_debug_set_threshold(5);
+  mbedtls_ssl_setup( ssl, conf );
+
+#if MBEDTLS_VERSION_MAJOR == 1 && MBEDTLS_VERSION_MINOR == 1
   ssn = (ssl_session *)mrb_malloc(mrb, sizeof(ssl_session));
   ssl_set_session( ssl, 0, 600, ssn );
   ssl_set_ciphersuites( ssl, ssl_default_ciphersuites );
@@ -202,9 +213,10 @@ static mrb_value mrb_ssl_set_rng(mrb_state *mrb, mrb_value self) {
 
   mrb_get_args(mrb, "o", &rng);
   mrb_data_check_type(mrb, rng, &mrb_ctr_drbg_type);
-  ctr_drbg = DATA_CHECK_GET_PTR(mrb, rng, &mrb_ctr_drbg_type, ctr_drbg_context);
-  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-  ssl_set_rng(ssl, ctr_drbg_random, ctr_drbg);
+  ctr_drbg = DATA_CHECK_GET_PTR(mrb, rng, &mrb_ctr_drbg_type, mbedtls_ctr_drbg_context);
+  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
+
+  mbedtls_ssl_conf_rng(ssl->conf, &mbedtls_ctr_drbg_random, ctr_drbg);
   return mrb_true_value();
 }
 
@@ -296,29 +308,29 @@ static mrb_value mrb_ssl_close_notify(mrb_state *mrb, mrb_value self) {
 }
 
 static mrb_value mrb_ssl_close(mrb_state *mrb, mrb_value self) {
-  ssl_context *ssl;
+  mbedtls_ssl_context *ssl;
 
-  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
+  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
   return mrb_true_value();
 }
 
 static mrb_value mrb_ssl_bytes_available(mrb_state *mrb, mrb_value self) {
-  ssl_context *ssl;
+  mbedtls_ssl_context *ssl;
   mrb_int count=0, fd=0;
 
-  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-  fd = *((int *)ssl->p_recv);
+  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
+  fd = ((mbedtls_net_context *) ssl->p_bio)->fd;
   if (fd != NULL) ioctl(fd, FIONREAD, &count);
 
   return mrb_fixnum_value(count);
 }
 
 static mrb_value mrb_ssl_fileno(mrb_state *mrb, mrb_value self) {
-  ssl_context *ssl;
+  mbedtls_ssl_context *ssl;
   mrb_int fd=0;
 
-  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, ssl_context);
-  fd = *((int *)ssl->p_recv);
+  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
+  fd = ((mbedtls_net_context *) ssl->p_bio)->fd;
 
   return mrb_fixnum_value(fd);
 }
