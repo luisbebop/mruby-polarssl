@@ -25,4 +25,5 @@ MRuby::Build.new do |conf|
   conf.gem :git => 'git@github.com:iij/mruby-mtest.git'
 
   conf.gem File.expand_path(File.dirname(__FILE__))
+  conf.enable_test
 end
