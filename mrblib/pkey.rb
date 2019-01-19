@@ -37,7 +37,7 @@ module PolarSSL
         "secp256k1" => POLARSSL_ECP_DP_SECP256K1,
       }
 
-      attr_reader :curve, :entropy, :ctr_drbg, :pem
+      attr_reader :curve, :curve_id, :entropy, :ctr_drbg, :pem
 
       def initialize(pem_or_curve = "secp256k1")
         alloc
@@ -47,9 +47,11 @@ module PolarSSL
       end
 
       def check_pem(pem_or_curve)
-        @curve = CURVES[pem_or_curve]
-        unless @curve
+        @curve_id = CURVES[pem_or_curve]
+        unless @curve_id
           load_pem(pem_or_curve)
+        else
+          @curve = pem_or_curve
         end
       end
     end

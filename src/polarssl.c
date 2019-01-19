@@ -354,24 +354,24 @@ static mrb_value mrb_ecdsa_alloc(mrb_state *mrb, mrb_value self) {
 }
 
 static mrb_value mrb_ecdsa_generate_key(mrb_state *mrb, mrb_value self) {
-  ctr_drbg_context *ctr_drbg;
-  ecdsa_context *ecdsa;
-  mrb_int curve=0;
-  mrb_value obj, curve_obj;
+  mbedtls_ctr_drbg_context *ctr_drbg;
+  mbedtls_ecp_curve_info *curve_info;
+  mbedtls_ecdsa_context *ecdsa;
+  mrb_value obj, curve;
   int ret;
 
-  ecdsa     = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
-  obj       = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@ctr_drbg"));
-  curve_obj = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@curve"));
-  ctr_drbg  = DATA_CHECK_GET_PTR(mrb, obj, &mrb_ctr_drbg_type, ctr_drbg_context);
+  ecdsa    = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, mbedtls_ecdsa_context);
+  obj      = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@ctr_drbg"));
+  curve    = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@curve"));
+  ctr_drbg = DATA_CHECK_GET_PTR(mrb, obj, &mrb_ctr_drbg_type, mbedtls_ctr_drbg_context);
 
-  if (mrb_fixnum_p(curve_obj)) {
-    curve = mrb_fixnum(curve_obj);
+  if (mrb_string_p(curve)) {
+    curve_info = mbedtls_ecp_curve_info_from_name(RSTRING_PTR(curve));
   } else {
     return mrb_false_value();
   }
 
-  if(ecdsa_genkey(ecdsa, curve, ctr_drbg_random, ctr_drbg) == 0) {
+  if(mbedtls_ecdsa_genkey(ecdsa, curve_info->grp_id, mbedtls_ctr_drbg_random, ctr_drbg) == 0) {
     return mrb_true_value();
   } else {
     return mrb_false_value();
@@ -379,27 +379,31 @@ static mrb_value mrb_ecdsa_generate_key(mrb_state *mrb, mrb_value self) {
 }
 
 static mrb_value mrb_ecdsa_load_pem(mrb_state *mrb, mrb_value self) {
-  ecdsa_context *ecdsa;
-  pk_context pkey;
+  mbedtls_ecdsa_context *ecdsa;
+  mbedtls_pk_context pkey;
   mrb_value pem;
   int ret = 0;
+  char error[30] = {0};
 
   mrb_get_args(mrb, "S", &pem);
 
-  pk_init( &pkey );
+  mbedtls_pk_init( &pkey );
 
-  ret = pk_parse_key(&pkey, RSTRING_PTR(pem), RSTRING_LEN(pem), NULL, 0);
+  ret = mbedtls_pk_parse_key(&pkey, (const unsigned char *)RSTRING_PTR(pem), RSTRING_LEN(pem)+1, NULL, 0);
   if (ret == 0) {
-    ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, ecdsa_context);
-    ret = ecdsa_from_keypair(ecdsa, pk_ec(pkey));
+    ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, mbedtls_ecdsa_context);
+    ret = mbedtls_ecdsa_from_keypair(ecdsa, mbedtls_pk_ec(pkey));
     if (ret == 0) {
-      pk_free( &pkey );
+      mbedtls_pk_free( &pkey );
       return mrb_true_value();
     }
   }
 
-  pk_free( &pkey );
-  mrb_raise(mrb, E_RUNTIME_ERROR, "can't parse pem");
+  mbedtls_pk_free( &pkey );
+
+  sprintf(error, "can't parse pem %d", ret);
+
+  mrb_raise(mrb, E_RUNTIME_ERROR, error);
   return mrb_false_value();
 }
 
