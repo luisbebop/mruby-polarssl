@@ -73,6 +73,17 @@ cipher.update("1111111111111111")
 # => "17668DFC7292532D"
 ```
 
+## DEBUG
+
+Add flag `MBEDTLS_DEBUG_C` on mrbgem.rake to enable mbedtls debugs via stdout, example:
+
+```
+-  spec.cc.flags << '-D_FILE_OFFSET_BITS=64 -Wall -W -Wdeclaration-after-statement'
++  spec.cc.flags << '-D_FILE_OFFSET_BITS=64 -Wall -W -Wdeclaration-after-statement -DMBEDTLS_DEBUG_C'
+```
+
+If customized display is required check `my_debug_func()`.
+
 ## License
 
 Under Apache 2.0 license, same as mbedtls license
