@@ -246,6 +246,17 @@ static mrb_value mrb_ssl_set_socket(mrb_state *mrb, mrb_value self) {
   return mrb_true_value();
 }
 
+static mrb_value mrb_ssl_set_hostname(mrb_state *mrb, mrb_value self) {
+  mbedtls_ssl_context *ssl;
+
+  mrb_get_args(mrb, "S", &hostname);
+
+  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
+  mbedtls_ssl_set_hostname(ssl, RSTRING_PTR(hostname));
+
+  return mrb_true_value();
+}
+
 static int mbedtls_status_is_ssl_in_progress( int ret )
 {
   return( ret == MBEDTLS_ERR_SSL_WANT_READ ||
@@ -719,6 +730,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, s, "set_authmode", mrb_ssl_set_authmode, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "set_rng", mrb_ssl_set_rng, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "set_socket", mrb_ssl_set_socket, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, s, "set_hostname", mrb_ssl_set_hostname, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "handshake", mrb_ssl_handshake, MRB_ARGS_NONE());
   mrb_define_method(mrb, s, "write", mrb_ssl_write, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "read", mrb_ssl_read, MRB_ARGS_REQ(1));
