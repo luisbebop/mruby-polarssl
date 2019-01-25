@@ -233,13 +233,24 @@ static mrb_value mrb_ssl_set_socket(mrb_state *mrb, mrb_value self) {
   return mrb_true_value();
 }
 
+static int mbedtls_status_is_ssl_in_progress( int ret )
+{
+  return( ret == MBEDTLS_ERR_SSL_WANT_READ ||
+      ret == MBEDTLS_ERR_SSL_WANT_WRITE ||
+      ret == MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS );
+}
+
 static mrb_value mrb_ssl_handshake(mrb_state *mrb, mrb_value self) {
   mbedtls_ssl_context *ssl;
   int ret;
 
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
 
-  ret = mbedtls_ssl_handshake(ssl);
+  while( ( ret = mbedtls_ssl_handshake( ssl ) ) != 0 ) {
+    if( ! mbedtls_status_is_ssl_in_progress( ret ) )
+      break;
+  }
+
   if (ret < 0) {
     if (ret == MBEDTLS_ERR_SSL_WANT_READ) {
       mrb_raise(mrb, E_NETWANTREAD, "ssl_handshake() returned MBEDTLS_ERR_SSL_WANT_READ");
