@@ -1,5 +1,5 @@
 MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
-  spec.license = 'GPL'
+  spec.license = 'Apache License 2.0'
   spec.authors = 'luisbebop@gmail.com'
   spec.version = "2.0.0"
 
