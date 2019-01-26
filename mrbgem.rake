@@ -1,7 +1,7 @@
 MRuby::Gem::Specification.new('mruby-polarssl') do |spec|
   spec.license = 'Apache License 2.0'
   spec.authors = 'luisbebop@gmail.com'
-  spec.version = "2.1.0"
+  spec.version = "2.1.1"
 
   polarssl_dirname = 'polarssl'
   polarssl_src = "#{spec.dir}/#{polarssl_dirname}"
