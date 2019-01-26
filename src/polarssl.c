@@ -148,7 +148,7 @@ static mrb_value mrb_ctrdrbg_self_test() {
 #define E_NETWANTWRITE (mrb_class_get_under(mrb,mrb_class_get(mrb, "PolarSSL"),"NetWantWrite"))
 #define E_SSL_ERROR (mrb_class_get_under(mrb,mrb_class_get_under(mrb,mrb_module_get(mrb, "PolarSSL"),"SSL"), "Error"))
 
-#if defined(MBEDTLS_DEBUG_C)
+#if defined(MRUBY_MBEDTLS_DEBUG_C)
 static void my_debug_func( void *ctx, int level,
                       const char *file, int line,
                       const char *str )
@@ -183,7 +183,7 @@ static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
   mbedtls_ssl_config_defaults( conf, MBEDTLS_SSL_IS_CLIENT,
       MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT );
 
-#if defined(MBEDTLS_DEBUG_C)
+#if defined(MRUBY_MBEDTLS_DEBUG_C)
   mbedtls_ssl_conf_dbg( conf, my_debug_func, stdout );
   mbedtls_debug_set_threshold(5);
 #endif

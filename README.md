@@ -75,11 +75,11 @@ cipher.update("1111111111111111")
 
 ## DEBUG
 
-Add flag `MBEDTLS_DEBUG_C` on mrbgem.rake to enable mbedtls debugs via stdout, example:
+Add flag `MRUBY_MBEDTLS_DEBUG_C` on mrbgem.rake to enable mbedtls debugs via stdout, example:
 
 ```
 -  spec.cc.flags << '-D_FILE_OFFSET_BITS=64 -Wall -W -Wdeclaration-after-statement'
-+  spec.cc.flags << '-D_FILE_OFFSET_BITS=64 -Wall -W -Wdeclaration-after-statement -DMBEDTLS_DEBUG_C'
++  spec.cc.flags << '-D_FILE_OFFSET_BITS=64 -Wall -W -Wdeclaration-after-statement -DMRUBY_MBEDTLS_DEBUG_C'
 ```
 
 If customized display is required check `my_debug_func()`.
