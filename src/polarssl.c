@@ -43,8 +43,8 @@ static void mrb_ssl_free(mrb_state *mrb, void *ptr) {
 
   if (ssl != NULL) {
     if (ssl->conf != NULL) {
-      mbedtls_ssl_config_free(ssl->conf);
-      mrb_free(mrb, ssl->conf);
+      mbedtls_ssl_config_free((mbedtls_ssl_config  *)ssl->conf);
+      mrb_free(mrb, (mbedtls_ssl_config  *)ssl->conf);
     }
 
     mbedtls_ssl_free(ssl);
@@ -205,7 +205,7 @@ static mrb_value mrb_ssl_set_endpoint(mrb_state *mrb, mrb_value self) {
 
   mrb_get_args(mrb, "i", &endpoint_mode);
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
-  mbedtls_ssl_conf_authmode(ssl->conf, endpoint_mode);
+  mbedtls_ssl_conf_authmode((mbedtls_ssl_config  *)ssl->conf, endpoint_mode);
   return mrb_true_value();
 }
 
@@ -215,7 +215,7 @@ static mrb_value mrb_ssl_set_authmode(mrb_state *mrb, mrb_value self) {
 
   mrb_get_args(mrb, "i", &authmode);
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
-  mbedtls_ssl_conf_authmode(ssl->conf, authmode);
+  mbedtls_ssl_conf_authmode((mbedtls_ssl_config  *)ssl->conf, authmode);
   return mrb_true_value();
 }
 
@@ -229,7 +229,7 @@ static mrb_value mrb_ssl_set_rng(mrb_state *mrb, mrb_value self) {
   ctr_drbg = DATA_CHECK_GET_PTR(mrb, rng, &mrb_ctr_drbg_type, mbedtls_ctr_drbg_context);
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
 
-  mbedtls_ssl_conf_rng(ssl->conf, &mbedtls_ctr_drbg_random, ctr_drbg);
+  mbedtls_ssl_conf_rng((mbedtls_ssl_config  *)ssl->conf, &mbedtls_ctr_drbg_random, ctr_drbg);
   return mrb_true_value();
 }
 
@@ -356,7 +356,7 @@ static mrb_value mrb_ssl_bytes_available(mrb_state *mrb, mrb_value self) {
 
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
   fd = ((mbedtls_net_context *) ssl->p_bio)->fd;
-  if (fd != NULL) ioctl(fd, FIONREAD, &count);
+  if (fd) ioctl(fd, FIONREAD, &count);
 
   return mrb_fixnum_value(count);
 }
@@ -406,7 +406,6 @@ static mrb_value mrb_ecdsa_generate_key(mrb_state *mrb, mrb_value self) {
   mbedtls_ecp_curve_info *curve_info;
   mbedtls_ecdsa_context *ecdsa;
   mrb_value obj, curve;
-  int ret;
 
   ecdsa    = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, mbedtls_ecdsa_context);
   obj      = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@ctr_drbg"));
@@ -414,7 +413,7 @@ static mrb_value mrb_ecdsa_generate_key(mrb_state *mrb, mrb_value self) {
   ctr_drbg = DATA_CHECK_GET_PTR(mrb, obj, &mrb_ctr_drbg_type, mbedtls_ctr_drbg_context);
 
   if (mrb_string_p(curve)) {
-    curve_info = mbedtls_ecp_curve_info_from_name(RSTRING_PTR(curve));
+    curve_info = (mbedtls_ecp_curve_info *)mbedtls_ecp_curve_info_from_name(RSTRING_PTR(curve));
   } else {
     return mrb_false_value();
   }
@@ -461,7 +460,6 @@ static mrb_value mrb_ecdsa_public_key(mrb_state *mrb, mrb_value self) {
   unsigned char str[600];
   size_t len;
   int i, j;
-  mrb_value public_key;
 
   ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, mbedtls_ecdsa_context);
 
@@ -475,19 +473,18 @@ static mrb_value mrb_ecdsa_public_key(mrb_state *mrb, mrb_value self) {
     return mrb_false_value();
   }
 
-  for(i=0, j=0; i < len; i++,j+=2) {
-    sprintf(&str[j], "%c%c", "0123456789ABCDEF" [buf[i] / 16],
+  for(i=0, j=0; i < (int)len; i++,j+=2) {
+    sprintf((char *)&str[j], "%c%c", "0123456789ABCDEF" [buf[i] / 16],
         "0123456789ABCDEF" [buf[i] % 16] );
   }
 
-  return mrb_str_new(mrb, str, len*2);
+  return mrb_str_new(mrb, (char *)&str, len*2);
 }
 
 static mrb_value mrb_ecdsa_private_key(mrb_state *mrb, mrb_value self) {
   unsigned char buf[300];
   unsigned char str[600];
   mbedtls_ecdsa_context *ecdsa;
-  mrb_value public_key;
   size_t len, i, j;
 
   ecdsa = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, mbedtls_ecdsa_context);
@@ -495,7 +492,7 @@ static mrb_value mrb_ecdsa_private_key(mrb_state *mrb, mrb_value self) {
   memset(&str, 0, sizeof(str));
   memset(&buf, 0, sizeof(buf));
 
-  if( mbedtls_ecp_point_write_binary( &ecdsa->grp, &ecdsa->d,
+  if( mbedtls_ecp_point_write_binary( &ecdsa->grp, (mbedtls_ecp_point *)&ecdsa->d,
         MBEDTLS_ECP_PF_COMPRESSED, &len, buf, sizeof(buf) ) != 0 )
   {
     mrb_raise(mrb, E_RUNTIME_ERROR, "can't extract Public Key");
@@ -503,12 +500,12 @@ static mrb_value mrb_ecdsa_private_key(mrb_state *mrb, mrb_value self) {
   }
 
   for(i=0, j=0; i < len; i++,j+=2) {
-    sprintf(&str[j], "%c%c", "0123456789ABCDEF" [buf[i] / 16],
+    sprintf((char *)&str[j], "%c%c", "0123456789ABCDEF" [buf[i] / 16],
         "0123456789ABCDEF" [buf[i] % 16] );
   }
 
   /*return mrb_str_new(mrb, str, len*2);*/
-  return mrb_str_new(mrb, &str[2], len*2 - 2);
+  return mrb_str_new(mrb, (char *)&str[2], len*2 - 2);
 }
 
 static mrb_value mrb_ecdsa_sign(mrb_state *mrb, mrb_value self) {
@@ -527,23 +524,23 @@ static mrb_value mrb_ecdsa_sign(mrb_state *mrb, mrb_value self) {
   ecdsa    = DATA_CHECK_GET_PTR(mrb, self, &mrb_ecdsa_type, mbedtls_ecdsa_context);
   ctr_drbg = DATA_CHECK_GET_PTR(mrb, obj, &mrb_ctr_drbg_type, mbedtls_ctr_drbg_context);
 
-  ret = mbedtls_ecdsa_write_signature(ecdsa, MBEDTLS_MD_SHA256, RSTRING_PTR(hash), RSTRING_LEN(hash),
+  ret = mbedtls_ecdsa_write_signature(ecdsa, MBEDTLS_MD_SHA256, (unsigned char *)RSTRING_PTR(hash), RSTRING_LEN(hash),
       buf, &len, mbedtls_ctr_drbg_random, ctr_drbg);
 
-  for(i=0, j=0; i < len; i++,j+=2) {
-    sprintf(&str[j], "%c%c", "0123456789ABCDEF" [buf[i] / 16],
+  for(i=0, j=0; i < (int)len; i++,j+=2) {
+    sprintf((char *)&str[j], "%c%c", "0123456789ABCDEF" [buf[i] / 16],
         "0123456789ABCDEF" [buf[i] % 16] );
   }
 
   if (ret == 0) {
-    return mrb_str_new(mrb, &str, len*2);
+    return mrb_str_new(mrb, (char *)&str, len*2);
   } else {
     return mrb_fixnum_value(ret);
   }
 }
 
 static mrb_value mrb_des_encrypt(mrb_state *mrb, mrb_value self) {
-  mrb_value mode, key, source, dest, iv;
+  mrb_value mode, key, source, iv;
   unsigned char output[100];
   mbedtls_des_context ctx;
   mrb_int len=8;
@@ -553,25 +550,25 @@ static mrb_value mrb_des_encrypt(mrb_state *mrb, mrb_value self) {
   mrb_get_args(mrb, "SSSS", &mode, &key, &source, &iv);
 
   mbedtls_des_init(&ctx);
-  mbedtls_des_setkey_enc(&ctx, RSTRING_PTR(key));
+  mbedtls_des_setkey_enc(&ctx, (unsigned char *)RSTRING_PTR(key));
 
   if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "CBC", 3)) == 0) {
-    mbedtls_des_crypt_cbc(&ctx, MBEDTLS_DES_ENCRYPT, RSTRING_LEN(source), RSTRING_PTR(iv),
-        RSTRING_PTR(source), output);
+    mbedtls_des_crypt_cbc(&ctx, MBEDTLS_DES_ENCRYPT, RSTRING_LEN(source), (unsigned char *)RSTRING_PTR(iv),
+        (unsigned char *)RSTRING_PTR(source), output);
     len = RSTRING_LEN(source);
   } else if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "ECB", 3)) == 0) {
-    mbedtls_des_crypt_ecb(&ctx, RSTRING_PTR(source), output);
+    mbedtls_des_crypt_ecb(&ctx, (unsigned char *)RSTRING_PTR(source), output);
   } else {
     mbedtls_des_free(&ctx);
     return mrb_nil_value();
   }
 
   mbedtls_des_free(&ctx);
-  return mrb_str_new(mrb, output, len);
+  return mrb_str_new(mrb, (char *)&output, len);
 }
 
 static mrb_value mrb_des_decrypt(mrb_state *mrb, mrb_value self) {
-  mrb_value mode, key, source, dest, iv;
+  mrb_value mode, key, source, iv;
   unsigned char output[100];
   mbedtls_des_context ctx;
   mrb_int len=8;
@@ -581,25 +578,25 @@ static mrb_value mrb_des_decrypt(mrb_state *mrb, mrb_value self) {
   mrb_get_args(mrb, "SSSS", &mode, &key, &source, &iv);
 
   mbedtls_des_init(&ctx);
-  mbedtls_des_setkey_dec(&ctx, RSTRING_PTR(key));
+  mbedtls_des_setkey_dec(&ctx, (unsigned char *)RSTRING_PTR(key));
 
   if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "CBC", 3)) == 0) {
-    mbedtls_des_crypt_cbc(&ctx, MBEDTLS_DES_DECRYPT, RSTRING_LEN(source), RSTRING_PTR(iv),
-        RSTRING_PTR(source), output);
+    mbedtls_des_crypt_cbc(&ctx, MBEDTLS_DES_DECRYPT, RSTRING_LEN(source), (unsigned char *)RSTRING_PTR(iv),
+        (unsigned char *)RSTRING_PTR(source), output);
     len = RSTRING_LEN(source);
   } else if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "ECB", 3)) == 0) {
-    mbedtls_des_crypt_ecb(&ctx, RSTRING_PTR(source), output);
+    mbedtls_des_crypt_ecb(&ctx, (unsigned char *)RSTRING_PTR(source), output);
   } else {
     mbedtls_des_free(&ctx);
     return mrb_nil_value();
   }
 
   mbedtls_des_free(&ctx);
-  return mrb_str_new(mrb, output, len);
+  return mrb_str_new(mrb, (char *)&output, len);
 }
 
 static mrb_value mrb_des3_encrypt(mrb_state *mrb, mrb_value self) {
-  mrb_value mode, key, source, dest, iv;
+  mrb_value mode, key, source, iv;
   unsigned char output[100];
   mbedtls_des3_context ctx;
   mrb_int len=16;
@@ -610,20 +607,20 @@ static mrb_value mrb_des3_encrypt(mrb_state *mrb, mrb_value self) {
 
   mbedtls_des3_init(&ctx);
   if (RSTRING_LEN(key) == 16) {
-    mbedtls_des3_set2key_enc(&ctx, RSTRING_PTR(key));
+    mbedtls_des3_set2key_enc(&ctx, (unsigned char *)RSTRING_PTR(key));
   } else if (RSTRING_LEN(key) == 24) {
-    mbedtls_des3_set3key_enc(&ctx, RSTRING_PTR(key));
+    mbedtls_des3_set3key_enc(&ctx, (unsigned char *)RSTRING_PTR(key));
   } else {
     mbedtls_des3_free(&ctx);
     return mrb_nil_value();
   }
 
   if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "CBC", 3)) == 0) {
-    mbedtls_des3_crypt_cbc(&ctx, MBEDTLS_DES_ENCRYPT, RSTRING_LEN(source), RSTRING_PTR(iv),
-        RSTRING_PTR(source), output);
+    mbedtls_des3_crypt_cbc(&ctx, MBEDTLS_DES_ENCRYPT, RSTRING_LEN(source), (unsigned char *)RSTRING_PTR(iv),
+        (unsigned char *)RSTRING_PTR(source), output);
     len = RSTRING_LEN(source);
   } else if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "ECB", 3)) == 0) {
-    mbedtls_des3_crypt_ecb(&ctx, RSTRING_PTR(source), output);
+    mbedtls_des3_crypt_ecb(&ctx, (unsigned char *)RSTRING_PTR(source), output);
     len = 8;
   } else {
     mbedtls_des3_free(&ctx);
@@ -631,11 +628,11 @@ static mrb_value mrb_des3_encrypt(mrb_state *mrb, mrb_value self) {
   }
 
   mbedtls_des3_free(&ctx);
-  return mrb_str_new(mrb, output, len);
+  return mrb_str_new(mrb, (char *)&output, len);
 }
 
 static mrb_value mrb_des3_decrypt(mrb_state *mrb, mrb_value self) {
-  mrb_value mode, key, source, dest, iv;
+  mrb_value mode, key, source, iv;
   unsigned char output[100];
   mbedtls_des3_context ctx;
   mrb_int len=16;
@@ -646,20 +643,20 @@ static mrb_value mrb_des3_decrypt(mrb_state *mrb, mrb_value self) {
 
   mbedtls_des3_init(&ctx);
   if (RSTRING_LEN(key) == 16) {
-    mbedtls_des3_set2key_dec(&ctx, RSTRING_PTR(key));
+    mbedtls_des3_set2key_dec(&ctx, (unsigned char *)RSTRING_PTR(key));
   } else if (RSTRING_LEN(key) == 24) {
-    mbedtls_des3_set3key_dec(&ctx, RSTRING_PTR(key));
+    mbedtls_des3_set3key_dec(&ctx, (unsigned char *)RSTRING_PTR(key));
   } else {
     mbedtls_des3_free(&ctx);
     return mrb_nil_value();
   }
 
   if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "CBC", 3)) == 0) {
-    mbedtls_des3_crypt_cbc(&ctx, MBEDTLS_DES_DECRYPT, RSTRING_LEN(source), RSTRING_PTR(iv),
-        RSTRING_PTR(source), output);
+    mbedtls_des3_crypt_cbc(&ctx, MBEDTLS_DES_DECRYPT, RSTRING_LEN(source), (unsigned char *)RSTRING_PTR(iv),
+        (unsigned char *)RSTRING_PTR(source), output);
     len = RSTRING_LEN(source);
   } else if (mrb_str_cmp(mrb, mode, mrb_str_new(mrb, "ECB", 3)) == 0) {
-    mbedtls_des3_crypt_ecb(&ctx, RSTRING_PTR(source), output);
+    mbedtls_des3_crypt_ecb(&ctx, (unsigned char *)RSTRING_PTR(source), output);
     len = 8;
   } else {
     mbedtls_des3_free(&ctx);
@@ -667,37 +664,37 @@ static mrb_value mrb_des3_decrypt(mrb_state *mrb, mrb_value self) {
   }
 
   mbedtls_des3_free(&ctx);
-  return mrb_str_new(mrb, output, len);
+  return mrb_str_new(mrb, (char *)&output, len);
 }
 
 static mrb_value mrb_base64_encode(mrb_state *mrb, mrb_value self) {
   mrb_value src;
   size_t len;
 
-  int argc = mrb_get_args(mrb, "S", &src);
+  mrb_get_args(mrb, "S", &src);
 
   unsigned char buffer[RSTRING_LEN(src) * 3 + 1];
   memset(buffer, 0, sizeof(buffer));
 
   len = sizeof(buffer);
-  mbedtls_base64_encode(buffer, len, &len, RSTRING_PTR(src), RSTRING_LEN(src));
+  mbedtls_base64_encode(buffer, len, &len, (unsigned char *)RSTRING_PTR(src), RSTRING_LEN(src));
 
-  return mrb_str_new(mrb, buffer, len);
+  return mrb_str_new(mrb, (char *)&buffer, len);
 }
 
 static mrb_value mrb_base64_decode(mrb_state *mrb, mrb_value self) {
   mrb_value src;
   size_t len;
 
-  int argc = mrb_get_args(mrb, "S", &src);
+  mrb_get_args(mrb, "S", &src);
 
   unsigned char buffer[RSTRING_LEN(src) * 3 + 1];
   memset(buffer, 0, sizeof(buffer));
 
   len = sizeof(buffer);
-  mbedtls_base64_decode(buffer, len, &len, RSTRING_PTR(src), RSTRING_LEN(src));
+  mbedtls_base64_decode(buffer, len, &len, (unsigned char *)RSTRING_PTR(src), RSTRING_LEN(src));
 
-  return mrb_str_new(mrb, buffer, len);
+  return mrb_str_new(mrb, (char *)&buffer, len);
 }
 
 void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
