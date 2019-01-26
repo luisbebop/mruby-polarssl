@@ -248,6 +248,7 @@ static mrb_value mrb_ssl_set_socket(mrb_state *mrb, mrb_value self) {
 
 static mrb_value mrb_ssl_set_hostname(mrb_state *mrb, mrb_value self) {
   mbedtls_ssl_context *ssl;
+  mrb_value hostname;
 
   mrb_get_args(mrb, "S", &hostname);
 
