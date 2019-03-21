@@ -45,6 +45,7 @@ static void mrb_ssl_free(mrb_state *mrb, void *ptr) {
     if (ssl->conf != NULL) {
       mbedtls_ssl_config_free((mbedtls_ssl_config  *)ssl->conf);
       mrb_free(mrb, (mbedtls_ssl_config  *)ssl->conf);
+      ssl->conf = NULL;
     }
 
     mbedtls_ssl_free(ssl);
