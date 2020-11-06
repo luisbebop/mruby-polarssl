@@ -136,6 +136,39 @@ static mrb_value mrb_ctrdrbg_initialize(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
+static mrb_value mrb_ctrdrbg_random_bytes(mrb_state *mrb, mrb_value self) {
+  mrb_int num_bytes;
+  mbedtls_ctr_drbg_context *ctr_drbg;
+  unsigned char *buf;
+  mrb_value str;
+
+  mrb_get_args(mrb, "i", &num_bytes);
+
+  ctr_drbg = (mbedtls_ctr_drbg_context *)DATA_PTR(self);
+
+  if (!ctr_drbg) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "DRBG not initialized");
+  }
+
+  buf = mrb_malloc(mrb, num_bytes);
+
+  if (!buf) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "Buffer allocation failed");
+  }
+
+  if (mbedtls_ctr_drbg_random(ctr_drbg, buf, num_bytes)) {
+    free(buf);
+    mrb_raise(mrb, E_RUNTIME_ERROR, "Random data generation failed");
+  }
+
+  str = mrb_str_new(mrb, (char *) buf, num_bytes);
+
+  mrb_free(mrb, buf);
+  buf = NULL;
+
+  return str;
+}
+
 static mrb_value mrb_ctrdrbg_self_test() {
   if( mbedtls_ctr_drbg_self_test(0) == 0 ) {
     return mrb_true_value();
@@ -712,6 +745,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   c = mrb_define_class_under(mrb, p, "CtrDrbg", mrb->object_class);
   MRB_SET_INSTANCE_TT(c, MRB_TT_DATA);
   mrb_define_method(mrb, c, "initialize", mrb_ctrdrbg_initialize, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(1));
+  mrb_define_method(mrb, c, "random_bytes", mrb_ctrdrbg_random_bytes, MRB_ARGS_REQ(1));
   mrb_define_singleton_method(mrb, (struct RObject*)c, "self_test", mrb_ctrdrbg_self_test, MRB_ARGS_NONE());
 
   s = mrb_define_class_under(mrb, p, "SSL", mrb->object_class);
