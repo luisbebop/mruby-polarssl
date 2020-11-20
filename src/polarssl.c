@@ -209,8 +209,6 @@ static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
     }
   }
 
-  value = mrb_hash_get(mrb, hash, mrb_str_new_lit(mrb, "dDOL"));
-
 #if MBEDTLS_VERSION_MAJOR == 1 && MBEDTLS_VERSION_MINOR == 1
   ssl_session *ssn;
 #endif
