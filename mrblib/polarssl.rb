@@ -6,7 +6,8 @@ if Object.const_defined? :PolarSSL
     class NetWantRead < StandardError; end
     class NetWantWrite < StandardError; end
     class SSL
-      class Error < RuntimeError; end
+      class Error < StandardError; end
+      class ReadTimeoutError < StandardError; end
     end
   end
 end
