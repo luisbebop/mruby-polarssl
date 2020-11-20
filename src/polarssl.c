@@ -181,6 +181,7 @@ static mrb_value mrb_ctrdrbg_self_test() {
 #define E_NETWANTREAD (mrb_class_get_under(mrb,mrb_class_get(mrb, "PolarSSL"),"NetWantRead"))
 #define E_NETWANTWRITE (mrb_class_get_under(mrb,mrb_class_get(mrb, "PolarSSL"),"NetWantWrite"))
 #define E_SSL_ERROR (mrb_class_get_under(mrb,mrb_class_get_under(mrb,mrb_module_get(mrb, "PolarSSL"),"SSL"), "Error"))
+#define E_SSL_READ_TIMEOUT (mrb_class_get_under(mrb,mrb_class_get_under(mrb,mrb_module_get(mrb, "PolarSSL"),"SSL"), "ReadTimeoutError"))
 
 #if defined(MRUBY_MBEDTLS_DEBUG_C)
 static void my_debug_func( void *ctx, int level,
@@ -243,6 +244,17 @@ static mrb_value mrb_ssl_set_endpoint(mrb_state *mrb, mrb_value self) {
   return mrb_true_value();
 }
 
+static mrb_value mrb_ssl_set_read_timeout(mrb_state *mrb, mrb_value self) {
+  mbedtls_ssl_context *ssl;
+  mrb_int timeout_ms;
+
+  mrb_get_args(mrb, "i", &timeout_ms);
+  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
+  mbedtls_ssl_conf_read_timeout( (mbedtls_ssl_config  *)ssl->conf, timeout_ms);
+
+  return mrb_true_value();
+}
+
 static mrb_value mrb_ssl_set_authmode(mrb_state *mrb, mrb_value self) {
   mbedtls_ssl_context *ssl;
   mrb_int authmode;
@@ -276,7 +288,7 @@ static mrb_value mrb_ssl_set_socket(mrb_state *mrb, mrb_value self) {
   mrb_data_check_type(mrb, socket, &mrb_io_type);
   fptr = DATA_CHECK_GET_PTR(mrb, socket, &mrb_io_type, struct mrb_io);
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
-  mbedtls_ssl_set_bio( ssl, fptr, mbedtls_net_send, mbedtls_net_recv, NULL ); // timeout recv
+  mbedtls_ssl_set_bio( ssl, fptr, mbedtls_net_send, mbedtls_net_recv, NULL );
   return mrb_true_value();
 }
 
@@ -352,6 +364,9 @@ static mrb_value mrb_ssl_read(mrb_state *mrb, mrb_value self) {
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
   ret = mbedtls_ssl_read(ssl, (unsigned char *)buf, maxlen);
   if ( ret == 0 || ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || buf == NULL) {
+    value = mrb_nil_value();
+  } else if (ret == MBEDTLS_ERR_SSL_TIMEOUT) {
+    mrb_raise(mrb, E_SSL_READ_TIMEOUT, "ssl_read() returned E_SSL_READ_TIMEOUT");
     value = mrb_nil_value();
   } else if (ret < 0) {
     mrb_raise(mrb, E_SSL_ERROR, "ssl_read() returned E_SSL_ERROR");
@@ -760,6 +775,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   // 2: Certificate verification mode for having required verification.
   mrb_define_const(mrb, s, "SSL_VERIFY_REQUIRED", mrb_fixnum_value(MBEDTLS_SSL_VERIFY_REQUIRED));
   mrb_define_method(mrb, s, "set_endpoint", mrb_ssl_set_endpoint, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, s, "set_read_timeout", mrb_ssl_set_read_timeout, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "set_authmode", mrb_ssl_set_authmode, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "set_rng", mrb_ssl_set_rng, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "set_socket", mrb_ssl_set_socket, MRB_ARGS_REQ(1));
