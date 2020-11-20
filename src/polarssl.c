@@ -294,7 +294,7 @@ static mrb_value mrb_ssl_set_socket(mrb_state *mrb, mrb_value self) {
   mrb_data_check_type(mrb, socket, &mrb_io_type);
   fptr = DATA_CHECK_GET_PTR(mrb, socket, &mrb_io_type, struct mrb_io);
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
-  mbedtls_ssl_set_bio( ssl, fptr, mbedtls_net_send, mbedtls_net_recv, NULL );
+  mbedtls_ssl_set_bio( ssl, fptr, mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
   return mrb_true_value();
 }
 
