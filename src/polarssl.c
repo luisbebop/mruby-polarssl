@@ -5,6 +5,7 @@
 #include "mruby/ext/io.h"
 
 #include "mruby/variable.h"
+#include "mruby/hash.h"
 
 /*#include "mruby/ext/context_log.h"*/
 
@@ -195,6 +196,20 @@ static void my_debug_func( void *ctx, int level,
 static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
   mbedtls_ssl_context *ssl;
   mbedtls_ssl_config *conf;
+  mrb_value hash, timeout;
+  mrb_int timeout_ms = 0;
+
+  mrb_get_args(mrb, "|H", &hash);
+
+  if (mrb_hash_p(hash)) {
+    timeout = mrb_hash_get(mrb, hash, mrb_symbol_value(mrb_intern_cstr(mrb, "read_timeout")));
+    hash = mrb_hash_new(mrb);
+    if (mrb_fixnum_p(timeout)) {
+      timeout_ms = mrb_fixnum(timeout);
+    }
+  }
+
+  value = mrb_hash_get(mrb, hash, mrb_str_new_lit(mrb, "dDOL"));
 
 #if MBEDTLS_VERSION_MAJOR == 1 && MBEDTLS_VERSION_MINOR == 1
   ssl_session *ssn;
@@ -217,6 +232,10 @@ static mrb_value mrb_ssl_initialize(mrb_state *mrb, mrb_value self) {
 
   mbedtls_ssl_config_defaults( conf, MBEDTLS_SSL_IS_CLIENT,
       MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT );
+
+  if (timeout_ms != 0) {
+    mbedtls_ssl_conf_read_timeout(conf, timeout_ms);
+  }
 
 #if defined(MRUBY_MBEDTLS_DEBUG_C)
   mbedtls_ssl_conf_dbg( conf, my_debug_func, stdout );
@@ -241,17 +260,6 @@ static mrb_value mrb_ssl_set_endpoint(mrb_state *mrb, mrb_value self) {
   mrb_get_args(mrb, "i", &endpoint_mode);
   ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
   mbedtls_ssl_conf_authmode((mbedtls_ssl_config  *)ssl->conf, endpoint_mode);
-  return mrb_true_value();
-}
-
-static mrb_value mrb_ssl_set_read_timeout(mrb_state *mrb, mrb_value self) {
-  mbedtls_ssl_context *ssl;
-  mrb_int timeout_ms;
-
-  mrb_get_args(mrb, "i", &timeout_ms);
-  ssl = DATA_CHECK_GET_PTR(mrb, self, &mrb_ssl_type, mbedtls_ssl_context);
-  mbedtls_ssl_conf_read_timeout( (mbedtls_ssl_config  *)ssl->conf, timeout_ms);
-
   return mrb_true_value();
 }
 
@@ -765,7 +773,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 
   s = mrb_define_class_under(mrb, p, "SSL", mrb->object_class);
   MRB_SET_INSTANCE_TT(s, MRB_TT_DATA);
-  mrb_define_method(mrb, s, "initialize", mrb_ssl_initialize, MRB_ARGS_NONE());
+  mrb_define_method(mrb, s, "initialize", mrb_ssl_initialize, MRB_ARGS_REQ(1));
   // 0: Endpoint mode for acting as a client.
   mrb_define_const(mrb, s, "SSL_IS_CLIENT", mrb_fixnum_value(MBEDTLS_SSL_IS_CLIENT));
   // 0: Certificate verification mode for doing no verification.
@@ -775,7 +783,6 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
   // 2: Certificate verification mode for having required verification.
   mrb_define_const(mrb, s, "SSL_VERIFY_REQUIRED", mrb_fixnum_value(MBEDTLS_SSL_VERIFY_REQUIRED));
   mrb_define_method(mrb, s, "set_endpoint", mrb_ssl_set_endpoint, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, s, "set_read_timeout", mrb_ssl_set_read_timeout, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "set_authmode", mrb_ssl_set_authmode, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "set_rng", mrb_ssl_set_rng, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, s, "set_socket", mrb_ssl_set_socket, MRB_ARGS_REQ(1));
