@@ -369,7 +369,7 @@ static mrb_value mrb_ssl_read(mrb_state *mrb, mrb_value self) {
     mrb_raise(mrb, E_SSL_READ_TIMEOUT, "ssl_read() returned E_SSL_READ_TIMEOUT");
     value = mrb_nil_value();
   } else if (ret < 0) {
-    mrb_raise(mrb, E_SSL_ERROR, "ssl_read() returned E_SSL_ERROR");
+    mrb_raisef(mrb, E_SSL_ERROR, "ssl_read() returned E_SSL_ERROR [%d]", ret);
     value = mrb_nil_value();
   } else {
     value = mrb_str_new(mrb, buf, ret);
