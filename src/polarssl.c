@@ -771,7 +771,7 @@ void mrb_mruby_polarssl_gem_init(mrb_state *mrb) {
 
   s = mrb_define_class_under(mrb, p, "SSL", mrb->object_class);
   MRB_SET_INSTANCE_TT(s, MRB_TT_DATA);
-  mrb_define_method(mrb, s, "initialize", mrb_ssl_initialize, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, s, "initialize", mrb_ssl_initialize, MRB_ARGS_OPT(1));
   // 0: Endpoint mode for acting as a client.
   mrb_define_const(mrb, s, "SSL_IS_CLIENT", mrb_fixnum_value(MBEDTLS_SSL_IS_CLIENT));
   // 0: Certificate verification mode for doing no verification.
